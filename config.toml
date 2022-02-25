@@ -1,0 +1,16 @@
+baseURL = ""
+languageCode = "en-us"
+title = "Alex's Blog"
+theme = "tale"
+
+[menu]
+  [[menu.main]]
+    identifier = "posts"
+    name = "Posts"
+    title = "Posts"
+    url = "/posts"
+    weight = 0
+
+[Author]
+    name = "Alex"
+
