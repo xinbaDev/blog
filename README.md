@@ -9,4 +9,4 @@ cd blog
 hugo server
 ```
 
-Then visit http://localhost:1313.
+Then visit http://localhost:1313/xinba.github.io.
