@@ -1,6 +1,6 @@
 ---
-title: "记一次CICD部署体验"
-date: 2021-12-12T13:15:32+11:00
+title: "记一次CICD部署"
+date: 2022-02-12T13:15:32+11:00
 draft: true
 summary: 之前就有部署CICD的计划，也曾经尝试过利用aws codepipeline部署简单的CD，但是一直没有完整的部署CICD的经历，这次趁着用rust开发新项目的机会，尝试了一下。
 ---
@@ -13,4 +13,8 @@ summary: 之前就有部署CICD的计划，也曾经尝试过利用aws codepipel
 
 通过阅读github workflow的文档，我大概了解的github action的使用方法，尤其是其中的安全方面的最佳实践。github action基本上完全代码化，保存在项目中.github的workflow中。其功能非常强大，而且非常灵活，如果使用不正确会有秘匙泄漏等安全方面的危害。其中一个就是不要轻易使用第三方的action, 如果要使用，也应该通读其代码，并使用合适tag将版本固定，或者fork其repo。还有就是需要对用户可控的参数进行控制，防止注入攻击。除了安全方面，还有一些优化，比如使用cache来加快部署，减少github action的运行时间。github action的语法非常方便的支持多平台的测试，因为这次测试的应用只运行在linux上，所以这次考虑linux的情况。测试完成之后需要上传到aws ecr上，需要相应的权限。这块我使用了repo中的secret来提供相关的aws secret key, 这样只有这个repo可以访问到这个secret，而这个aws用户只有对应ecr repo的 push image的相关权限，既方便又安全。
 
-完成github action的部署和推送到aws ecr后，接下来就是aws codepipeline的配置。之前使用aws提供的网页配置过一个。但是没有将其代码化。这次使用terraform来部署这个CD的pipeline, 结果就碰到了不少问题。其中主要都是权限的问题。在code pipeline中主要需要从s3获取kubernetes所需的deployment.yaml文件，然后通过kb apply的方法让kubernetes更新部署。
+完成github action的部署和推送到aws ecr后，接下来就是aws codepipeline的配置。之前使用aws提供的网页配置过一个。但是没有将其代码化。这次使用terraform来部署这个CD的pipeline, 结果就碰到了不少问题。其中主要都是权限的问题。在code pipeline中主要需要从s3获取kubernetes所需的deployment.yaml文件，然后通过kb apply的方法让kubernetes更新部署。这里code pipeline主要需要两个权限，一是从s3 getobject的权限，第二个是连接kubernetes，并发送apply命令的权限。第一个权限除了需要给codebuild满足最小权限（least privilege）的iam，还要给s3 bucket的配置相关的policy，否则会出现access denied的情况。而第二个权限除了给配置iam, 还要在kubernetes的ConfigMap中加入相应iam role的权限绑定（system master）。
+
+完成这些后，基本上CICD的整个测试，发布的流程就基本打通了。接下来就是添加更多功能了。首先就是添加versioning的功能。为了实现这个目标，我大概想到了两种做法。一是在本地commit的时候就一起把tag打上，并生成相关的deployment.yaml文件一起commit, 这样发布的时候，只要获取github上面的yaml文件就可以了。这一步需要给codepipeline访问github的权限。第二就是在github action的时候动态生成相关deployment.yaml并上传到s3, 发布的时候直接从s3获取。这一中方案需要多增加github action上传文件到s3的权限。经过权衡，我决定使用第2中方案。主要是觉得第二种更加灵活也容易实现（有大量开源github action），而且将version相关的数据commit上去也感觉有些怪，因为这个数据并不是代码相关，而更加和部署相关。选定这个方案，就开始找上传s3的github action，找了一个星星数最多的试了下，但是因为access denied一直没有成功，中间查看了issue, 发现有人碰到了类似的问题，但是并没有确定的解决方案。我自己在本地测试了下，发现相同逻辑的代码，同样的权限，可以上传成功。但是一旦使用action，不管是用act在本地模拟github action，或者是直接上传github都会因为access denied而失败。看了下，该action的核心用到了js版的aws-sdk，并没有什么问题。所以非常奇怪。最后我使用了另外一个github action使用相同权限成功上传了。这个github action使用了docker+python版的aws-sdk，使用起来更加灵活。
+
+最后就是添加alert的功能，设想是当部署完成后，通过slack api发送通知到相应的channel。这块很简单没有什么好说的。之后还有一个计划就是添加人工审阅的环节。目前因为还是测试阶段，应用直接发布到staging的服务器。之后上production会需要人工审阅的环节。这块可以通过aws的apigateway+lambda来实现。之前我也做过类似的serverless服务，不过当时使用aws的step function发送email通知的方式来实现的。这次打算换一种方法，用apigateway+lambda来试试。
