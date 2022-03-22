@@ -1,0 +1,16 @@
+---
+title: "记一次CICD部署体验"
+date: 2021-12-12T13:15:32+11:00
+draft: true
+summary: 之前就有部署CICD的计划，也曾经尝试过利用aws codepipeline部署简单的CD，但是一直没有完整的部署CICD的经历，这次趁着用rust开发新项目的机会，尝试了一下。
+---
+
+之前就有部署CICD的计划，也曾经尝试过利用aws codepipeline部署简单的CD，但是一直没有完整的部署CICD的经历，这次趁着用rust开发新项目的机会，尝试了一下。
+
+最初的目标是使用github action实现自动测试，测试通过后build一个docker image并推送到aws ecr上面。接下来通过code pipeline将这个image发布到kubernetes集群上去。整个过程很清晰，其中后半部分的CD环节我之前做过，所以需要学习测试的地方主要在前半CI部分。而后半CD部分我这次打算使用terraform将需要用到的infrastructure代码化，方便之后管理维护。尽管整个过程看起来并不难，但是中间还是碰到了不少坑，同时也学习或者回顾了一些CICD需要注意的地方。现记录如下。
+
+首先是为什么选择用github action作为CI的工具。之前就看过不少开源项目使用github action, 而且也看过一些从bitbucket迁移到github action的博客。他吸引我的地方主要是有一个强大的action开源marketplace, 这大大减轻自己开发的工作。还有就是dependent bot也非常方便，大量的开源项目都在使用。在加上一些安全检测，包括机器学习在其中的应用，都让我觉得github在devops这块大有作为。甚至有一个专有名词gitops都出现了，已经再也不能忽视github在devops中扮演的重要角色了。虽然这些理论上我都可以在codebuild上实现，但是要达到同样的效果，投入简直难以想象。而且我们公司有买github enterprise的服务，每个月有3000mins的计算时间，所以正好拿来使用。
+
+通过阅读github workflow的文档，我大概了解的github action的使用方法，尤其是其中的安全方面的最佳实践。github action基本上完全代码化，保存在项目中.github的workflow中。其功能非常强大，而且非常灵活，如果使用不正确会有秘匙泄漏等安全方面的危害。其中一个就是不要轻易使用第三方的action, 如果要使用，也应该通读其代码，并使用合适tag将版本固定，或者fork其repo。还有就是需要对用户可控的参数进行控制，防止注入攻击。除了安全方面，还有一些优化，比如使用cache来加快部署，减少github action的运行时间。github action的语法非常方便的支持多平台的测试，因为这次测试的应用只运行在linux上，所以这次考虑linux的情况。测试完成之后需要上传到aws ecr上，需要相应的权限。这块我使用了repo中的secret来提供相关的aws secret key, 这样只有这个repo可以访问到这个secret，而这个aws用户只有对应ecr repo的 push image的相关权限，既方便又安全。
+
+完成github action的部署和推送到aws ecr后，接下来就是aws codepipeline的配置。之前使用aws提供的网页配置过一个。但是没有将其代码化。这次使用terraform来部署这个CD的pipeline, 结果就碰到了不少问题。其中主要都是权限的问题。在code pipeline中主要需要从s3获取kubernetes所需的deployment.yaml文件，然后通过kb apply的方法让kubernetes更新部署。
