@@ -1,0 +1,17 @@
+---
+title: "从jaeger到《mastering distributed tracing》"
+date: 2022-07-06T07:23:00+11:00
+summary: 最近工作中碰到了一个奇怪的问题，在websocket upgrade时候，nginx时常会报错，显示peer connection reset，但是没有说明具体的原因。这个问题平时表现不出来，至少我测试了这么多次都没有发现，也没有听到任何用户的回报，似乎可以认为这个错误对用户是无感的。网上查了一下，也有不少类似的问题，但是都和我碰到的问题不完全相同。于是一直对这个问题的根源很好奇，我怀疑是nginx在proxy connection到应用服务器的时候，被应用服务器给reset了。但是没有证据，所有常规的log也看不出什么东西，所以就放下了。正好最近有时间，想把这个问题解决了。计划是先增加相关的监控来进一步缩小出错的地方。于是jeager就进入的我视野。
+
+draft: true
+---
+
+最近工作中碰到了一个奇怪的问题，在websocket upgrade时候，nginx时常会报错，显示peer connection reset，但是没有说明具体的原因。这个问题平时表现不出来，至少我测试了这么多次都没有发现，也没有听到任何用户的回报，似乎可以认为这个错误对用户是无感的。网上查了一下，也有不少类似的问题，但是都和我碰到的问题不完全相同。于是一直对这个问题的根源很好奇，我怀疑是nginx在proxy connection到应用服务器的时候，被应用服务器给reset了。但是没有证据，所有常规的log也看不出什么东西，所以就放下了。正好最近有时间，想把这个问题解决了。计划是先增加相关的监控来进一步缩小出错的地方。于是jeager就进入的我视野。
+
+jaeger是一个分布式监控工具，industrial grade的，比我前些日子看得forta这种监控工具要复杂得多。jaeger和传统的监控不同，主要是针对request在microservices中运行情况的监控，而不是那种监控cpu,memory那种基础设施的监控。从这个角度说，jaeger监控的粒度更小，更加context rich。jaeger目前已经开发6年了，直到现在依旧还在添加新的功能，虽然整体框架基本定型，但是各种后端支持依旧在不停的增加。看这种代码量十分大的项目，一开始也是看得云里雾里，好在项目的文档很多，搞清楚整体架构之后再去看代码，大概就可以抓住他的主要部分。然后在重点关注一些自己感兴趣的部分，搞清楚那部分和其他部分之间的关系，慢慢的对这个项目就有了一个整体的掌握。尤其是开始熟悉代码的一些特点，比如架构构造的习惯之后，看起来就比较顺利了。在jaeger中，我发现对象创建比较喜欢叠罗汉，经常创建一个新的对象，然后这个对象有马上成为下一个对象的参数，一层套一层，最后整个顶层的对象就变得非常复杂。还有就是对象注入，以spanwriter为例，可以注入的对象很多，非常灵活。
+
+通过这段时间对源码的阅读，以及对Distributed tracing的理解，我认为除了agent, collector这些主要的组成部分之外，spanreader,spanwriter是重点。agent, collector是整个系统运行的，数据交流的主要成员，可以从整体上帮助理解jaeger是怎么运行的。但是要更深入理解tracing是怎么work的还是需要从spanwriter/spanreader上去研究。除此之外，distributed tracing还离不开client sdk，其中需要解决的的一个问题就是如何传递context。既有同一程序内的context传递，也有不同机器间的context传递。而distributing tracing需要做到尽可能减少对应用的影响。据我了解很多稍微打一些公司都有专门封装好的request库供程序员使用，里面就包括了监控，tls，重试等等功能。而分布式监控这块目前业界标准我记得是opentelemetry。
+
+零零散散记录了一些我对distrbuted tracing这些天的学习和认识，回到开头工作中碰到的那个问题。这个问题就是distributed tracing解决的，不过因为我们使用的服务器，一个是nginx, 一个是daphne服务器，两个都不是我们自己的写的，所以添加tracing不太容易。查了一下，nginx目前已经有加入opentelemetry的[计划](https://www.nginx.com/blog/integrating-opentelemetry-modern-apps-reference-architecture-progress-report/)， 而daphne则似乎并没有专门的opentelemetry的支持。
+
+也许到了应该换一个websocket服务器的时候了？
