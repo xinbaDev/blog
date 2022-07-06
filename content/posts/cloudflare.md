@@ -2,7 +2,7 @@
 title: "关于前些天cloudflare事故的一些想法"
 date: 2022-06-25T10:49:00+11:00
 summary: 前几天下午cloudflare的网络出现了大事故，因为许多重要的网站都依赖cloudflare的网络，导致许多网站500无法访问，甚至连discord都一度无法正常使用。后来在twitter上看到消息，原来是cloudflare出了问题。隔天cloudflare就在我一直关注的官方博客上发布了事故报告，发布的速度和分析的详细都满足我对cloudflare这个公司的预期。这里主要是想记录一下我对这件事情的看法。
-draft: true
+draft: false
 ---
 
 前几天下午cloudflare的网络出现了大事故，因为许多重要的网站都依赖cloudflare的网络，导致许多网站500无法访问，甚至连discord都一度无法正常使用。后来在twitter上看到消息，原来是cloudflare出了问题。隔天cloudflare就在我一直关注的官方博客上发布了事故报告，发布的速度和分析的详细都满足我对cloudflare这个公司的预期。这里主要是想记录一下我对这件事情的看法。
