@@ -1,0 +1,14 @@
+---
+title: "uber关于data race pattern in go的研究"
+date: 2022-07-17T10:27:22+11:00
+draft: true
+summary: 最近在浏览uber技术博客的时候看到一个有趣的文章，文章的标题的是data race pattern in go。文章里面根据uber的所有GO项目中容易出现的data race情况进行分类。data race对我来说并不陌生，在并发情况下，对同一数据的读写如果处理不好就会产生。我之前一直听说go有data race的问题，但是一直没有特别明确的例子。而且uber是大公司，印象中有不少使用go的项目，比如zap开源项目就是go写的，之前提到的jaeger分布式监控项目也是。uber在go上面应该是有很多使用经验的。所以看到uber根据自己实际go项目的分析，我还是很有兴趣的。
+---
+
+最近在浏览uber技术博客的时候看到一个有趣的文章，文章的标题的是data race pattern in go。文章里面根据uber的所有GO项目中容易出现的data race情况进行分类。data race对我来说并不陌生，在并发情况下，对同一数据的读写如果处理不好就会产生。我之前一直听说go有data race的问题，但是一直没有特别明确的例子。而且uber是大公司，印象中有不少使用go的项目，比如zap开源项目就是go写的，之前提到的jaeger分布式监控项目也是。uber在go上面应该是有很多使用经验的。所以看到uber根据自己实际go项目的分析，我还是很有兴趣的。
+
+这次uber总结了7大容易产生data race的情况/分类，这里只大概介记录一下我感兴趣的一些data race。在第一类中，没有正确的私有化循环中的index variable。详细地说就是在循环里面调用go routine，同时go routine里面又使用到循环中的index variable。这个是比较好发现的一类。还有一些比较有意思的data race，比如错误的认为map是threadsafe的，毕竟map的操作看起来就是简单的赋值/读取。但是实际上，对map中一个key的赋值会影响其他的map中其他的key。所以也会产生data race的情况。所以在多线程中使用map需要上lock。除此之外，还有在sync.WaitGroup中，不正确的add/done函数的位置也会导致data race。等等。
+
+大概看下来，给我的一个感觉就是在循环中调用go routine要十分小心，否则容易出现data race。作者还做了一个统计，出现最多data race的一类是concurrent slice access。具体情况是在多并发情况下，访问一个slice的时候没有上锁。slice是一个比较特殊的类型，在传递时，metadata会copy到stack上，而不是只传递一个指针。所以也会造成data race的情况。还有一个值得一提的产生data race的情况就是错误的传递mutex，本来要传refence，结果传成value，也会造成data race。因为go的设计，这种错误的passing，也会被认为是可以的。这种情况在rust中就不会出现。
+
+总之，go里面出现data race的机会很多。而且一些不容易发现，尤其是在赶代码的。出错之后，data race的错误还不容易发现，在runtime的情况下也不一定马上能出现。修复起来很麻烦。在这方面rust就强多了，因为他的设计就是为了避免data race的情况。如果产生可能出现data race的代码，编译都通不过。当然rust代码写起来可能就没有go爽，主要是在写的同时除了应用逻辑，还要考虑内存方面的东西。而go写起来也没有python爽，因为要考虑变量类型的问题。可以看出来，现在编程语言从一开始越来越抽象，到这些年逐渐有一些回归C语言的趋势。甚至linux都考虑用rust来重写操作系统。可以看出rust已经是一个和C一样可以写操作系统的相对底层的语言了。
