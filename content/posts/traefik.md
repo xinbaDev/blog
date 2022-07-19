@@ -1,0 +1,16 @@
+---
+title: "调查开源服务器之traefik篇"
+date: 2022-07-18T019:45:00+11:00
+summary: 今天花了些时间去traefik的代码，不得不说，traefik的代码质量比我之前看到的caddy，sozu都要好，不愧是大项目。虽然目前我只看了前面几百个commits，但是已经感觉出来，traefik的代码质量明显的要好于之前看到一些类型相似的其他项目。最主要的感觉就是好读。整体代码读起来非常舒服，这得益于主要贡献者经常的代码重构。代码的架构看起来很自然，commit看起来有逻辑，经常通过简单的commit msg在稍微看看代码就知道这个commit是做什么的，这些都是代码好读的表现。
+draft: true
+---
+
+今天花了些时间去traefik的代码，不得不说，traefik的代码质量比我之前看到的caddy，sozu都要好，不愧是大项目。虽然目前我只看了前面几百个commits，但是已经感觉出来，traefik的代码质量明显的要好于之前看到一些类型相似的其他项目。最主要的感觉就是好读。整体代码读起来非常舒服，这得益于主要贡献者经常的代码重构。代码的架构看起来很自然，commit看起来有逻辑，经常通过简单的commit msg在稍微看看代码就知道这个commit是做什么的，这些都是代码好读的表现。还有就是对CICD的架设，印象中在项目早期的阶段就已经架设了自动测试，这个是我在其他小项目上没有看到的。还有就是对docker的支持，其他几个我看到的项目，比如caddy都没有专门的dockerfile。但是traefik在项目很早期就有了。
+
+从功能上来说，traefik更是超过了caddy, sozu许多。tarfik不只支持动态配置，而且还支持circuit breaker, retry, websocket, reverse proxy/load balancing等等我需要的功能。作为一个reverse proxy， traefik的最大卖点是自动更新route和相关配置。为了实现这个功能，traefik提供了许多provider, 有最常用的file provider，也就是直接读取文件config的，也有读取kubernetes的service来形成相关config的。这个特性确实非常有用，尤其是在microsevice的架构下，这种自动发现制动配置的功能几乎是必须的，也是最自然的。
+
+在性能上，traefik也表现的并不差，虽然没有nginx快，但是差距并不大。根据网上查到的benchmark，traefik的最大每秒请求数大概是nginx的85%。考虑到traefik目前支持的功能，以及非常方便的自动动态配置，我认为从nginx换成traefik是完全值得的。接下来的问题就是学习traefik如何配置的问题。以file provider为例，traefik采取了和cabby不一样的处理方式，专门写了一个praser来处理config文件的读取。这种方式没有caddy那种方便，但是对于需要去抓config的traefik来说，这种方式更合适。
+
+之前初步调查的时候，因为caddy支持opentlemetry, 而traefik还没有，所以觉得caddy可能更合适。但是这些天随着对traefik的深入了解，发现traefik在distribute tracing上还支持jaeger，而之前读jaeger代码时发现已经支持open telemetry了，所以这一块也不是问题了。综合比较下来，traefik确实是比caddy更有吸引力。从功能上讲，虽然两个功能上有很多的重合，但是traefik更像是一个比较专门的reverse proxy，而caddy除了可以做reverse proxy之外，还可以做服务器，比如静态服务器之类的。traefik将
+
+traefik是一个大项目，从2015开始开发到现在没有停过，已经有7年了。目前总共4400+个commits，一共600+个contributors，有一个非常活跃的人数众多的开源社区。我对traefik的印象不错，希望多花些时间看看他的代码并且先将staging上nginx的服务器换成traefix试试。
