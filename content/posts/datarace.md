@@ -1,7 +1,7 @@
 ---
 title: "uber关于data race pattern in go的研究"
 date: 2022-07-17T10:27:22+11:00
-draft: true
+draft: false
 summary: 最近在浏览uber技术博客的时候看到一个有趣的文章，文章的标题的是data race pattern in go。文章里面根据uber的所有GO项目中容易出现的data race情况进行分类。data race对我来说并不陌生，在并发情况下，对同一数据的读写如果处理不好就会产生。我之前一直听说go有data race的问题，但是一直没有特别明确的例子。而且uber是大公司，印象中有不少使用go的项目，比如zap开源项目就是go写的，之前提到的jaeger分布式监控项目也是。uber在go上面应该是有很多使用经验的。所以看到uber根据自己实际go项目的分析，我还是很有兴趣的。
 ---
 

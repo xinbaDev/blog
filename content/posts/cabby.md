@@ -2,7 +2,7 @@
 title: "调查开源服务器之caddy篇"
 date: 2022-07-13T019:45:00+11:00
 summary: 最近因为工作需要，接触到distributed tracing。看完后一系列文档后就计划也部署一套分布式监控系统以解决websocket一直以来奇怪的connection reset的报错。后来经过一些了解，发现目前使用的nginx服务器还没有很好的支持这个功能，于是打算干脆换一个服务器。
-draft: true
+draft: false
 ---
 
 最近因为工作需要，接触到distributed tracing。看完后一系列文档后就计划也部署一套分布式监控系统以解决websocket一直以来奇怪的connection reset的报错。后来经过一些了解，发现目前使用的nginx服务器还没有很好的支持这个功能，于是打算干脆换一个服务器。其实之前一直有替换nginx的打算，因为尽管nginx性能出众，但是是用c语言写的，配置扩展都不是特别方便。比如分布式监控这一块就不能很容易的添加。还有一些其他不方便的地方，比如dropbox就曾经记录过他们更换nginx的[理由以及更换的过程](https://dropbox.tech/infrastructure/how-we-migrated-dropbox-from-nginx-to-envoy)。总之nginx并不是非常好维护。

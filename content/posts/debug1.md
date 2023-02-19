@@ -1,7 +1,7 @@
 ---
 title: "记一次生产服务器debug(上)"
 date: 2020-04-14T10:27:22+11:00
-draft: false
+draft: true
 summary: 1. 17:18分，nginx的error日志里开始出现upstream 110 connection timeout的记录。2. 17:22分， netdata开始报警20min steal cpu = 18.2%， 并很快上升31.8%。 3. 17:27分， 群里开始有人报告相应服务不能访问。 4. 17:30分， 远程登录服务器后发现cpu使用率非常的高（主要是node server在占用），基本在80-100使用率，但是服务器的访问量并不高。
 ---
 
