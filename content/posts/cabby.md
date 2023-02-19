@@ -1,6 +1,6 @@
 ---
 title: "调查开源服务器之caddy篇"
-date: 2022-07-13T019:45:00+11:00
+date: 2022-07-13T19:45:00+11:00
 summary: 最近因为工作需要，接触到distributed tracing。看完后一系列文档后就计划也部署一套分布式监控系统以解决websocket一直以来奇怪的connection reset的报错。后来经过一些了解，发现目前使用的nginx服务器还没有很好的支持这个功能，于是打算干脆换一个服务器。
 draft: false
 ---
