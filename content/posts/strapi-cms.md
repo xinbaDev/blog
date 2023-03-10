@@ -1,17 +1,18 @@
 ---
-title: "strapi-cms中deep filtering的问题"
-date: 2022-05-28T11:12:22+11:00
-draft: false
-summary: 最近在研究stapi-cms优化的时候看到console里面一个warning，"Deep filtering queries should be used carefully (e.g Can cause performance issues). When possible build custom routes which will in most case be more optimised." 看到这个warningw我一开始是一头雾水的，于是打算调查一下。 
+Title: "Issue with Deep Filtering in Strapi CMS"
+Date: 2022-05-28T11:12:22+11:00
+Draft: false
+Summary: Recently, while researching optimizations for Strapi CMS, I came across a warning in the console - "Deep filtering queries should be used carefully (e.g Can cause performance issues). When possible build custom routes which will in most case be more optimised." I was confused by this warning and decided to investigate it further.
 ---
 
-最近在研究stapi-cms优化的时候看到console里面一个warning，"Deep filtering queries should be used carefully (e.g Can cause performance issues). When possible build custom routes which will in most case be more optimised." 看到这个warning我一开始是一头雾水的，于是打算调查一下。 
+Recently, while researching optimizations for Strapi CMS, I came across a warning in the console - "Deep filtering queries should be used carefully (e.g Can cause performance issues). When possible build custom routes which will in most case be more optimised." I was confused by this warning and decided to investigate it further.
 
-看到这个warning, 我首先产生了几个问题：
-1. 什么是deep filtering?
-2. 为什么deep filtering会影响performance, 具体是怎么影响？
+Upon seeing this warning, I had several questions in mind:
 
-于是先在github上搜索找到相关的issue,也并没有看到特别相关的内容，只看到一个issue#5593提到这个warning, 但是里面也没有具体讨论。然后专门查了一下deep filtering的解释，所谓的deep filtering就是filter中带有relation，在filter时需要join的那种。解释还是比较模糊，于是专门在vscode里搜索关键字Deep filtering，找到warning的定位在strapi-util.js中buildQuery函数中出现。
+1. What is deep filtering?
+2. Why does deep filtering affect performance, and how exactly does it impact it?
+
+I then searched on GitHub for relevant issues but did not find anything particularly related. The only issue (#5593) that mentioned this warning did not have any specific discussion about it. I then looked up the definition of deep filtering, which refers to filtering that involves relations and requires joining when filtering. However, the explanation was still somewhat unclear. I then searched for the keyword "deep filtering" in VSCode and found that the warning was located in the buildQuery function in strapi-util.js.
 
 ```js
 const buildQuery = ({ model, filters = {}, ...rest }) => {
@@ -45,7 +46,7 @@ const buildQuery = ({ model, filters = {}, ...rest }) => {
 };
 ```
 
-通过这段函数就可以发现，在strapi-cms中deep filter就是filters.where里面field有点号分隔的字段的情况。函数之后会处理filters.where，通过getAssociationFromFieldKey这个函数找到相关的model，最后调用orm中的buildQuery函数。看到这里依然不清楚为什么deep filtering会影响performace以至于写这段代码的dev特意写一个warning。于是继续看下去，去查看strapi-cms中的调用的orm的代码。在strapi-cms使用的是bookshelf这个orm, 具体的代码在strapi-hook-bookshelf这个package中。
+Through this function, we can discover that deep filtering in Strapi CMS refers to the situation where the field in the filters.where clause is a field separated by a dot. After processing the filters.where clause, the function uses the getAssociationFromFieldKey function to find the relevant model, and finally calls the buildQuery function in the ORM. If you're still unclear about why deep filtering affects performance to the point where the developer who wrote this code felt it necessary to include a warning, you can continue reading and look at the ORM code used in Strapi CMS. Strapi CMS uses the bookshelf ORM, and the specific code can be found in the strapi-hook-bookshelf package.
 
 ```js
 /**
@@ -197,9 +198,9 @@ const buildJoinsAndFilter = (qb, model, whereClauses) => {
 
 ```
 
-可以看到在这个函数的主要逻辑是先构建一个query tree，如果deep filtering越深（parts越多）树就越深，然后通过这个tree再去构建query。在构建query的过程中用到了递归，而且还有for循环里面的递归。递归的最后是buildJoin里面调用knex的query builder去构建sql query。knex是构建底层sql query的库，可以看到在buildJoin中对knew的调用用到了left join, 而且在manytomany的relation中会调用两次。left join是比较吃资源的query, 尤其是连接的表比较大的时候。目测这就是deep filtering会影响performance的主要原因。
+You can see that the main logic of this function is to first construct a query tree. The deeper the deep filtering (the more parts), the deeper the tree. Then, this tree is used to construct the query. Recursion is used in the query construction process, and there is also recursion inside the for loop. The end result of the recursion is the buildJoin function, which calls Knex's query builder to construct the SQL query. Knex is a library that builds low-level SQL queries. In the buildJoin function, a left join is used in the call to Knex, and it is called twice in the many-to-many relation. Left join is a resource-intensive query, especially when connecting to large tables. It appears that deep filtering is the main reason for performance degradation.
 
-下面用一个具体的例子来分析一下deep filtering， 以下是会触发warning的graphql query:
+Below is an example of a GraphQL query that triggers a warning.
 
 ```js
 ads (where: { tags: { name: "XXX" } } ) {
@@ -213,7 +214,8 @@ ads (where: { tags: { name: "XXX" } } ) {
     html
 }
 ```
-strapi-cms会将ads后面的where条件parse成以下的filter:
+The strapi-cms will parse the where condition after "ads" into the following filter:
+
 
 ```js
 {
@@ -222,9 +224,9 @@ strapi-cms会将ads后面的where条件parse成以下的filter:
   where: [ { field: 'tags.name', operator: 'eq', value: 'XXX' } ]
 }
 ```
-这里的field在buildQuery中会被split成 key = tags, parts = name, 然后会递归调用生成子树。
+In this filter, the "field" will be split into "key" as "tags" and "parts" as "name" in the buildQuery function. It will then recursively generate a subtree.
 
-而如果换一个query:
+If a different query is used:
 
 ```js 
 adtags (where: { name: "XXX" }) {
@@ -241,6 +243,6 @@ adtags (where: { name: "XXX" }) {
 }
 ```
 
-这个query也可以拿到所需要的资料，不同的是在buildQuery的时候就不会产生deep filtering的情况，一部分计算量被移到loader进行处理。其实本质上就是把原来一个复杂的query变成多个简单的query。这种有利有弊，并不是哪一种就更好，还是要看具体情况。我认为一般来说第一种都比第二种要好，因为较少的query次数，而且不需要在app端在重新整合数据。但是有时候deep filter太深太复杂，也会给db造成很大的压力。在某些情况下，比如需要连接的表特别大，而且在可以先filter这个表的情况下，第二种分开打query的方式就更好，因为可以提前filter掉一些无用的数据。这样db压力就会小很多，等于是让app来多分担一些db的计算。所以具体哪一种更好还是要看具体的query以及表的情况。
+This query can also retrieve the required information, but the difference is that there won't be deep filtering during buildQuery, and part of the computation will be handled by the loader. Essentially, a complex query is broken down into multiple simple queries. This approach has its advantages and disadvantages, and there is no one-size-fits-all solution - it depends on the specific situation. Generally, I believe the first approach is better because it involves fewer queries, and there is no need to re-integrate data on the app side. However, in some cases, when the deep filter is too complex and puts too much pressure on the database, the second approach of splitting the query may be better, especially when dealing with large tables that can be filtered in advance to eliminate unnecessary data. This reduces the database workload, effectively allowing the app to share some of the computation burden. Therefore, which approach is better depends on the specific query and table conditions.
 
-总而言之，因为数据库的设计多变，而且里面涉及各种表，情况千变万化，orm的框架很难照顾的面面具到，只能考虑一般的情况，尽可能适配，所以效能往往不是最优的。其实不只是框架，凡是复杂一些，应用场景比较多的软件都会有这种取舍。比如nginx，作为一个广泛使用的服务器就被用到了各种场景，nginx也是优化非常好的一个程序。但是依旧有许多nginx的改版以适应不同的场景，比如淘宝就专门开发过一个Tengine，以更好的服务高并发的需要。
+In summary, because database design is so variable and involves many tables, ORM frameworks can't cater to every possible scenario and can only consider general cases as much as possible, which means that performance is often not optimal. This is not just true for frameworks; any software that is somewhat complex and has many use cases will face similar trade-offs. For example, Nginx is a widely used server that has been deployed in various scenarios. Despite being a very well-optimized program, there are still many modified versions of Nginx, such as Tengine, which has been specifically developed to better serve high-concurrency needs.
