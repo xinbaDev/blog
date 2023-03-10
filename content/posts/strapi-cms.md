@@ -139,10 +139,7 @@ const buildJoinsAndFilter = (qb, model, whereClauses) => {
   const buildQueryTree = (whereClauses, model, queryTree) => {
     for (let whereClause of whereClauses) {
       const { field, operator, value } = whereClause;
-      // console.log("field:" + field)
       let [key, ...parts] = field.split('.');
-      // console.log("key:" + key)
-      // console.log(parts)
 
       const assoc = findAssoc(model, key);
 
@@ -233,7 +230,7 @@ adtags (where: { name: "XXX" }) {
     ads {
         name
         imgs {
-        url
+          url
         }
         is_active
         link
