@@ -1,11 +1,11 @@
 ---
-title: "系统调用open时到底发生了什么？（Linux内核学习笔记）"
-date: 2020-12-21T16:50:11+11:00
-summary: 在计算中系统中，最重要的有三类资源，分别是cpu, memory, disk，他们也是编程语言经常需要打交道的三类资源。比如cpu对应了语言的并发性(例如GO以高并发著称)，memory则涉及到语言的垃圾回收的机制，disk则是涉及到创建文件/删除文件等。应该说相比前两者，disk的部分是相对简单的。以python为例，一个简单的打开/创建文件，写入“hello world”，然后关闭文件的程序代码如下：
-draft: false
+Title: "What exactly happens when the 'open' system call is invoked? (Linux kernel study notes)"
+Date: 2020-12-21T16:50:11+11:00
+Summary: In computing systems, the three most important resources are CPU, memory, and disk, which are also the three types of resources that programming languages frequently deal with. For example, CPU corresponds to a language's concurrency (such as GO's reputation for high concurrency), memory involves a language's garbage collection mechanism, and disk involves creating/deleting files, etc. It can be said that compared to the first two, the disk part is relatively simple. Taking Python as an example, the code for a simple program that opens/creates a file, writes "hello world", and then closes the file is as follows
+draft: true
 ---
 
-在计算中系统中，最重要的有三类资源，分别是cpu, memory, disk，他们也是编程语言经常需要打交道的三类资源。比如cpu对应了语言的并发性(例如GO以高并发著称)，memory则涉及到语言的垃圾回收的机制，disk则是涉及到创建文件/删除文件等。应该说相比前两者，disk的部分是相对简单的。以python为例，一个简单的打开/创建文件，写入“hello world”，然后关闭文件的程序代码如下：
+In computing systems, the three most important resources are CPU, memory, and disk, which are also the three types of resources that programming languages frequently deal with. For example, CPU corresponds to a language's concurrency (such as GO's reputation for high concurrency), memory involves a language's garbage collection mechanism, and disk involves creating/deleting files, etc. It can be said that compared to the first two, the disk part is relatively simple. Taking Python as an example, the code for a simple program that opens/creates a file, writes "hello world", and then closes the file is as follows:
 
 ```python3=
 ## test.py
@@ -14,10 +14,10 @@ with open("test", "w") as fw:
     fw.write("hello world")
 ```
 
-非常简单的一个程序，比起cpu，内存的各种操作，文件操作起来非常简单。我们来看看他的一些系统调用,```strace python3 test.py``` 走起：
+A very simple program, compared to various CPU and memory operations, file operations are very easy. Let's take a look at some of its system calls with "strace python3 test.py" and get started:
 
+When running a python3 program, the Python runtime environment (virtual machine) is first started, and the script is read and other operations are performed. For the sake of clarity, this part of the system calls has been omitted.
 
-运行python3程序时会先启动python的运行环境（虚拟机），读入脚本等操作，为了直观，这部分系统调用已经去掉。
 
 ```bash=
 openat(AT_FDCWD, "test", O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC, 0666) = 3
@@ -48,23 +48,25 @@ write(3, "hello world", 11)             = 11
 close(3)                                = 0
 ```
 
-可以看为了创建一个test文件并写入"hello world"字串，python首先会调用openat的系统调用，并传入O_WRONLY|O_CREAT等flags去创建这个文件。接着fstate去获取这个文件的信息，通过ioctl去确认这个文件是普通文件而不是tty。然后用lseek去找到文件当前的位置。接下查了下文件所在的目录信息，还读取一个和编码相关_bootlocale程序。最后再通过调用write将"hello world"写入文件。比较奇怪的是lseek(3, 0, SEEK_CUR)调用了两次，分别在第4和第24行。ioctl也执行了两次，每次都传入一些奇怪的参数。
+To create a test file and write the string "hello world" to it, Python first calls the system call openat with the flags O_WRONLY|O_CREAT to create the file. Then, it uses fstate to get information about the file and confirms that it is a regular file and not a tty using ioctl. Next, it uses lseek to find the current position of the file. It also looks up information about the directory where the file is located and reads a program called _bootlocale that is related to encoding. Finally, it writes "hello world" to the file using the write function. It's strange that the lseek(3, 0, SEEK_CUR) function is called twice, at lines 4 and 24 respectively. The ioctl function is also called twice, each time with some strange parameters.
 
-抛开奇怪的ioctl和lseek调用，我们这里主要研究这一行系统调用：
+Ignoring the strange ioctl and lseek calls, the main focus here is on the system call:
 
 ```bash=
 openat(AT_FDCWD, "test", O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC, 0666) = 3
-# 剩下的3行之后在研究
 # lseek(3, 0, SEEK_CUR)                   = 0
 # write(3, "hello world", 11)             = 11
 # close(3)                                = 0
 ```
 
-这篇文章主要想讨论下文件系统是如何处理这个系统调用的。
+This article mainly discusses how the file system handles this system call.
 
-首先来看看openat，功能和open一样，不过可以防止race condition，具体可以看[这里](http://man7.org/linux/man-pages/man2/openat.2.html)。从表面上看其功能就是返回一个文件的标识。根据我的理解，这个标识就是文件系统在disk上找到一块地方，然后对这个地方进行一个编号，然后将编号返回给程序。之后程序就可以通过这个编号，告诉文件系统对带有这个标号的文件进行操作。比较感兴趣的是这个fd和相关的数据在内存中的数据结构是怎么样的，以及文件系统这怎么在disk上找到这个地方？
+First, let's take a look at openat. Its functionality is similar to open, but it can prevent race conditions. You can check the details [here]((http://man7.org/linux/man-pages/man2/openat.2.html)). At first glance, its function is to return an identifier for a file. As far as I understand, this identifier is a number that the file system assigns to a specific location on the disk and returns to the program. Then the program can use this identifier to tell the file system to operate on the file with this number.
 
-还是看看linux kernel中的源码：
+What is more interesting is the data structure of this file descriptor (fd) and related data in memory, and how the file system finds this location on the disk.
+
+Let's take a look at the source code in the Linux kernel.
+
 
 ```c=
 static long do_sys_openat2(int dfd, const char __user *filename,
@@ -81,10 +83,8 @@ static long do_sys_openat2(int dfd, const char __user *filename,
 	tmp = getname(filename);
 	if (IS_ERR(tmp))
 		return PTR_ERR(tmp);
-        //(1)fd是如何产生的？
 	fd = get_unused_fd_flags(how->flags);
 	if (fd >= 0) {
-                //(2)如何打开这个文件？
 		struct file *f = do_filp_open(dfd, tmp, &op);
 		if (IS_ERR(f)) {
 			put_unused_fd(fd);
@@ -99,7 +99,7 @@ static long do_sys_openat2(int dfd, const char __user *filename,
 }
 
 ```
-其中get_unused_fd_flags会调用__alloc_fd，阅读代码可以看到fd的由来，以及相关的一些数据结构。
+The function "get_unused_fd_flags" will call "__alloc_fd". By reading the code, you can see where the "fd" (file descriptor) comes from, as well as some related data structures.
 
 ```c=
 
@@ -120,8 +120,8 @@ int get_unused_fd_flags(unsigned flags)
 // 	bool resize_in_progress;
 // 	wait_queue_head_t resize_wait;
 
-// 	struct fdtable __rcu *fdt;  //__rcu是什么
-// 	struct fdtable fdtab; // fdtable在此
+// 	struct fdtable __rcu *fdt; 
+// 	struct fdtable fdtab; // fdtable is here
 //   /*
 //    * written part on a separate cache line in SMP
 //    */
@@ -150,11 +150,11 @@ int __alloc_fd(struct files_struct *files,
 
 	spin_lock(&files->file_lock);
 repeat:
-        // 从files中拿fdtable
+        // get ftables from files
 	fdt = files_fdtable(files);
         // 从0开始
 	fd = start;
-        // files里面保存了下一个fd
+        // save fd in files
 	if (fd < files->next_fd)
 		fd = files->next_fd;
 
@@ -181,7 +181,7 @@ repeat:
 	if (error)
 		goto repeat;
 
-         // 更新files里面下一个fd
+         // update the next fd in files
 	if (start <= files->next_fd)
 		files->next_fd = fd + 1;
 
@@ -220,7 +220,7 @@ out:
 
 ```
 
-接下来第二个问题，系统如何打开这个文件的？
+The next question is, how does the system open this file?
 
 ```c=
 struct file *do_filp_open(int dfd, struct filename *pathname,
@@ -305,7 +305,6 @@ struct file *do_filp_open(int dfd, struct filename *pathname,
         //     current->nameidata = p;
         // }
         set_nameidata(&nd, dfd, pathname);
-            //重点分析path_openat
         filp = path_openat(&nd, op, flags | LOOKUP_RCU);
         if (unlikely(filp == ERR_PTR(-ECHILD)))
             filp = path_openat(&nd, op, flags);
@@ -331,9 +330,7 @@ static struct file *path_openat(struct nameidata *nd,
 	} else if (unlikely(file->f_flags & O_PATH)) {
 		error = do_o_path(nd, flags, file);
 	} else {
-                // 上面unlikely的就先不看，先抓主要部分
 		const char *s = path_init(nd, flags);
-                // 遍历 + 打开文件
 		while (!(error = link_path_walk(s, nd)) &&
 			(error = do_last(nd, file, op)) > 0) {
 			nd->flags &= ~(LOOKUP_OPEN|LOOKUP_CREATE|LOOKUP_EXCL);
@@ -358,7 +355,7 @@ static struct file *path_openat(struct nameidata *nd,
 }
 ```
 
-接下来我们主要分析do_last这个函数：
+Next, we will mainly analyze the function "do_last".
 
 ```c=
 
@@ -368,7 +365,7 @@ static struct file *path_openat(struct nameidata *nd,
 static int do_last(struct nameidata *nd,
 		   struct file *file, const struct open_flags *op)
 {
-        // what is nd->path?
+    // what is nd->path?
 	struct dentry *dir = nd->path.dentry;
 	kuid_t dir_uid = nd->inode->i_uid;
 	umode_t dir_mode = nd->inode->i_mode;
@@ -421,7 +418,6 @@ static int do_last(struct nameidata *nd,
 			return -EISDIR;
 	}
 
-        // 会进到这里来
 	if (open_flag & (O_CREAT | O_TRUNC | O_WRONLY | O_RDWR)) {
 		error = mnt_want_write(nd->path.mnt);
 		if (!error)
@@ -442,7 +438,6 @@ static int do_last(struct nameidata *nd,
 		inode_lock(dir->d_inode);
 	else
 		inode_lock_shared(dir->d_inode);
-         // 看起来非常重要的函数
 	error = lookup_open(nd, &path, file, op, got_write);
 	if (open_flag & O_CREAT)
 		inode_unlock(dir->d_inode);
