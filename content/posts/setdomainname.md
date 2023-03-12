@@ -1,7 +1,7 @@
 ---
-title: "一个简单的c程序在linux下所需要的系统调用"
-date: 2019-08-20T19:39:11+11:00
-summary: 最近了解到了一个叫strace的神器，可以看到程序运行时的系统调用。于是写了个简单程序来做分析。这篇文章主要分析一个简单的c程序（如上）在运行时所需要的系统调用。但是不会深入分析系统调用的具体实现，如果有兴趣可以看我写的另一篇文章《一个系统调用的linux内核(v5.25)实现》, 里面有详细分析setdomainname的系统调用的内核实现。这里主要从更高的层次去分析，程序运行时为什么需要这些系统调用。
+Title: "System Calls Needed for a Simple C Program in Linux"
+Date: 2019-08-20T19:39:11+11:00
+Summary: Recently, I learned about a tool called strace which can show the system calls made during program execution. Out of curiosity, I wrote a simple program to analyze it. This article mainly analyzes the system calls needed during runtime for a simple C program in Linux. However, it does not go into deep analysis of the specific implementation of system calls. If you are interested, you can read my other article "Linux Kernel (v5.25) Implementation of a System Call" which provides a detailed analysis of the kernel implementation of the setdomainname system call. Here, I will mainly analyze at a higher level why these system calls are needed during program execution.
 draft: false
 ---
 
