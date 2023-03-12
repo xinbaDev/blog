@@ -1,73 +1,71 @@
 ---
-title: "什么是好的架构？"
-date: 2020-08-04T19:58:11+11:00
-summary: 使用AWS的云服务也有好几年了，最近在准备aws certified solution architect的考试。中间不仅对aws cloud的大大小小的功能系统的复习了一遍，同时也读了不少aws的白皮书。 这些天来一个问题又慢慢浮现在我的脑海中，挥之不去。到底什么是好的架构，或者说好的架构有什么特点？ 之前一直有在思考这方面的问题，也读过不少优秀的博客。印象中许多架构师的分享都是介绍如何利用各种框架技术实现高可用/高可靠性，高性能的服务。在大开眼界的同时，也给我一个感觉，只要掌握了各种优秀框架技术（适用场景以及利弊等）就可以作出好的架构。这次系统的看了aws的各种白皮书，让我又重新思考什么是好的架构，并且有了新的认识。
+Title: "What is a good architecture?"
+Date: 2020-08-04T19:58:11+11:00
+Summary: I've been using AWS cloud services for several years now, and recently I've been preparing for the AWS Certified Solution Architect exam. During this time, I have reviewed the various features and systems of AWS cloud, and I have also read many AWS whitepapers. Lately, a question has been slowly emerging in my mind -- what is a good architecture, or what are the characteristics of a good architecture? I have been thinking about this question for a while and have read many excellent blog posts on the subject. My impression is that many architects focus on how to use various framework technologies to achieve high availability, reliability, and performance services. While this has been eye-opening, it has also given me the impression that all you need to do is master various framework technologies (including their applicability and trade-offs) to create a good architecture. However, after reading various AWS whitepapers, I have been prompted to rethink what makes a good architecture and have gained new insights.
 draft: false
 ---
 
-使用AWS的云服务也有好几年了，最近在准备aws certified solution architect的考试。中间不仅对aws cloud的大大小小的功能系统的复习了一遍，同时也读了不少aws的白皮书。 这些天来一个问题又慢慢浮现在我的脑海中，挥之不去。到底什么是好的架构，或者说好的架构有什么特点？ 之前一直有在思考这方面的问题，也读过不少优秀的博客。印象中许多架构师的分享都是介绍如何利用各种框架技术实现高可用/高可靠性，高性能的服务。在大开眼界的同时，也给我一个感觉，只要掌握了各种优秀框架技术（适用场景以及利弊等）就可以作出好的架构。这次系统的看了aws的各种白皮书，让我又重新思考什么是好的架构，并且有了新的认识。
+I've been using AWS cloud services for several years now, and recently I've been preparing for the AWS Certified Solution Architect exam. During this time, I have reviewed the various features and systems of AWS cloud, and I have also read many AWS whitepapers. Lately, a question has been slowly emerging in my mind -- what is a good architecture, or what are the characteristics of a good architecture? I have been thinking about this question for a while and have read many excellent blog posts on the subject. My impression is that many architects focus on how to use various framework technologies to achieve high availability, reliability, and performance services. While this has been eye-opening, it has also given me the impression that all you need to do is master various framework technologies (including their applicability and trade-offs) to create a good architecture. However, after reading various AWS whitepapers, I have been prompted to rethink what makes a good architecture and have gained new insights.
 
-本文主要以[AWS Well-Architected Framework](https://d1.awsstatic.com/whitepapers/architecture/AWS_Well-Architected_Framework.pdf?trk=wp_card)的白皮书为源头，从以下几个角度(aws认为一个好架构需要具备的5大支柱)进行分析，简单谈谈我的理解。
+This article mainly takes the whitepaper of the [AWS Well-Architected Framework](https://d1.awsstatic.com/whitepapers/architecture/AWS_Well-Architected_Framework.pdf?trk=wp_card) as the source, and analyzes it from the following five perspectives (which AWS considers to be the 5 pillars of a good architecture), briefly discussing my understanding.
 
-1. **卓越运维** ([Operational Excellence Pillar](https://d0.awsstatic.com/whitepapers/architecture/AWS-Operational-Excellence-Pillar.pdf?ref=wellarchitected-wp))
-2. **安全** ([Security Pillar](https://d0.awsstatic.com/whitepapers/architecture/AWS-Security-Pillar.pdf?ref=wellarchitected-wp))
-3. **可靠性** ([Reliability Pillar](https://d0.awsstatic.com/whitepapers/architecture/AWS-Reliability-Pillar.pdf?ref=wellarchitected-wp))
-4. **效能**  ([Performance Efficiency Pillar](https://d0.awsstatic.com/whitepapers/architecture/AWS-Performance-Efficiency-Pillar.pdf?ref=wellarchitected-wp))
-5. **成本优化** ([Cost Optimization Pillar](https://d0.awsstatic.com/whitepapers/architecture/AWS-Cost-Optimization-Pillar.pdf?ref=wellarchitected-wp))
-
-
-## 卓越运维
-
-在五个pillar中，AWS把卓越的运营放在最前面，可见其重要性。我的理解是一个好的架构必须服务于业务，尽最大可能帮助业务成功。如果一个架构效能很好，可靠性也不错，但是却很难运营，那么这就不算是一个好架构。在一个难运营的架构，程序员要花大量的时间精力部署监控服务，人为操作容易出错，大大增加架构所带来的人力成本，并且影响功能的快速开发何迭代。所以一个好的架构也必须是一个好运营的架构。
-
-要做到好运营，自动化必不可少。比如最基本的CICD，解放程序员的手动测试和部署，使程序的更新发布大大加快。推而广之，所有运维的的操作都尽量能有代码自动实现（包括服务的横向扩展，甚至是灾难恢复），也就是所谓的operations as code。如果一个架构具备了这种自动根据服务情况来改变其自身状态的能力，那么就最大限度的减少人为干预的部分（减少人为错误），同时达到对业务变化作出更快的响应。
-
-如今，企业迁移到云已经是大势所趋，而微服务已经基本成为大型集群在云上“最佳实践”。微服务有许多优点，把云的优势发挥的淋漓尽致，但同时也带来了部署维护难的问题。一次操作可能涉及到成百上千instance, 手动操作已经不可能了。 这就对监控和自动化提出了更高的要求。
+1. **[Operational Excellence Pillar](https://d0.awsstatic.com/whitepapers/architecture/AWS-Operational-Excellence-Pillar.pdf?ref=wellarchitected-wp)**
+2. **([Security Pillar](https://d0.awsstatic.com/whitepapers/architecture/AWS-Security-Pillar.pdf?ref=wellarchitected-wp))**
+3. **([Reliability Pillar](https://d0.awsstatic.com/whitepapers/architecture/AWS-Reliability-Pillar.pdf?ref=wellarchitected-wp))**
+4. **([Performance Efficiency Pillar](https://d0.awsstatic.com/whitepapers/architecture/AWS-Performance-Efficiency-Pillar.pdf?ref=wellarchitected-wp))**
+5. **([Cost Optimization Pillar](https://d0.awsstatic.com/whitepapers/architecture/AWS-Cost-Optimization-Pillar.pdf?ref=wellarchitected-wp))**
 
 
-## 安全
+## Excellent Operations
 
-可靠的安全性是一切服务的基石。在这一块我发现国内的架构师一般在介绍架构的时候都会或多或少忽略，似乎安全是独立于架构的一个模块。在aws看来，安全是一个成功架构必不可少的重要元素。我认为架构是服务于业务的，如果架构不安全，业务的安全性也就很难保证。
+Among the five pillars, AWS places excellent operations at the forefront, indicating its importance. My understanding is that a good architecture must serve the business and help it succeed as much as possible. If an architecture performs well and is reliable, but is difficult to operate, then it is not a good architecture. In a difficult-to-operate architecture, programmers have to spend a lot of time and energy deploying monitoring services, and manual operations are prone to errors, greatly increasing the human cost of the architecture and affecting the rapid development and iteration of functions. Therefore, a good architecture must also be a well-operated architecture.
 
-一个好的架构必须将按全融入到设计的方方面面中。比如对各种资源的访问，必须要有一套安全的权限认证机制，基于最小权限设计原则，严格限制哪些资源可以被访问，被谁访问等等。还有数据如何安全的保存，如何安全的传输，这些都是好的架构必须要考虑的问题。
+To achieve good operations, automation is essential. For example, the most basic CICD liberates programmers from manual testing and deployment, greatly speeding up the updating and release of programs. More broadly, all operational operations should be implemented as much as possible with code (including horizontal scaling of services and even disaster recovery), which is called operations as code. If an architecture has the ability to automatically change its own state based on the service situation, then it can minimize human intervention (reduce human errors) while responding faster to changes in the business.
 
-以aws为例，IAM（AWS Identity and Access Management）是一个全局性的对aws服务进行访问控制的安全措施。通过IAM，所有的aws服务，包括计算资源，存储资源，网络资源等等都可以进行统一的安全管理，可以设置哪个user甚至是哪个应用可以访问相应资源。security group也是一个非常有用的安全措施。其主要作用相当于一个防火墙，可以用于比如EC2,RDS等资源上，可以限制访问的ip,ip段，以及访问端口等等，非常方便。在数据安全上，aws有KMS（key management service）的服务来统一管理秘匙，并用这些秘匙对数据进行加密。其中EBS（Elastic Block Store）的加密解密过程对访问的EC2是透明的，用户可以轻松对整个文件系统进行加密。aws的安全功能还有许多，例如WAF，NACL，CloudHSM等等。
+Today, the migration of enterprises to the cloud is the trend, and microservices have become the "best practice" for large clusters in the cloud. Microservices have many advantages and fully utilize the advantages of the cloud, but they also bring the problem of difficult deployment and maintenance. One operation may involve hundreds or even thousands of instances, and manual operations are no longer possible. This places higher demands on monitoring and automation.
 
-## 可靠性
 
-在5个基石中，可靠性是aws花了最多篇幅在介绍的（白皮书页数60+，比其他4个平均30页多出近1倍），可见可靠性的重要。aws也投入了许多精力来保证他提供的服务是高可用的。aws认为在云上设计原则主要有
+## Security
 
-1. **自动模拟失败的情况，并测试如何修复**
-    - Netflix有一个开源项目[chaosmonkey](https://github.com/netflix/chaosmonkey), 就是通过自动模拟失败的情况来测试架构健壮型的。Netflix会安排某一天专门对自己的生产服务器做测试，任意关闭其中的服务，看系统如何应对。也就是安全演习的意思。
-2. **自动从错误中修复**
-    - 这个在卓越运营部分已经提到过。自动化修复能减少人为失误，同时也能尽快作出响应。是一个架构是否可靠的重要标志之一。
-3. **横向自动扩展**
-    - 服务要能够弹性伸缩。当负载达到一定程度时（比如cpu在过去15分钟内在80%以上），服务可以自动增加资源来满足相应的请求。当负载降下去的时候（比如cpu在过去30分钟内都在40%以下），服务可以自动减少资源，来减少成本。
-4. **不要猜测最大负载**
-    - aws认为云计算的特点就是可以动态的增加和减少资源，不需要给这个系统架构设置一个资源限制。但这并不是说对架构的负载能力预测不重要，而是说要设计一个可以很容易动态伸缩的架构。之前看过一个腾讯架构师的分享，他认为一个合格的架构师应该要对整个系统的负载能力有一定评估的能力。我是深表认同的。
+Reliable security is the cornerstone of all services. In this regard, I have found that domestic architects generally overlook security when introducing architecture, as if security is an independent module apart from architecture. In AWS's view, security is an essential element for a successful architecture. I believe that architecture serves the business, and if the architecture is not secure, it is difficult to ensure the security of the business.
+
+A good architecture must fully integrate security into all aspects of the design. For example, there must be a secure permission authentication mechanism for accessing various resources, based on the principle of least privilege, to strictly limit which resources can be accessed, by whom, and so on. Additionally, how data is securely stored and transmitted are also issues that a good architecture must consider.
+
+Taking AWS as an example, IAM (AWS Identity and Access Management) is a global security measure for controlling access to AWS services. Through IAM, all AWS services, including computing resources, storage resources, network resources, and so on, can be uniformly managed for security purposes. You can set which user or even which application can access the corresponding resources. Security groups are also a very useful security measure. Their primary function is similar to a firewall, which can be used on resources such as EC2, RDS, etc., to restrict access to IP addresses, IP ranges, and access ports, making it very convenient. In terms of data security, AWS has the KMS (Key Management Service) service to centrally manage keys and encrypt data using these keys. The encryption and decryption process of EBS (Elastic Block Store) for accessing EC2 is transparent to users, making it easy to encrypt the entire file system. AWS has many other security features, such as WAF, NACL, CloudHSM, and so on.
+
+## Reliability
+
+Of the five pillars, reliability is the one that AWS devotes the most attention to in its introduction (with over 60 pages in the whitepaper, almost double the average of the other four), highlighting its importance. AWS has also put in a lot of effort to ensure that the services it provides are highly available. AWS believes that the main design principles for the cloud are:
+
+1. **Automatically simulate failure and test how to repair it**
+    - Netflix has an open-source project called[chaosmonkey](https://github.com/netflix/chaosmonkey), , which tests the robustness of an architecture by automatically simulating failure scenarios. Netflix schedules a day to test its own production servers, randomly shutting down one of their services to see how the system responds. This is similar to a security drill.
+2. **Automatically repair from errors**
+    - This was mentioned in the section on excellence in operations. Automated repairs can reduce human error and also allow for quick response, making it an important indicator of an architecture's reliability.
+3. **Automatic horizontal scaling**
+    - The service should be able to scale elastically. When the load reaches a certain level (such as the CPU being above 80% in the past 15 minutes), the service can automatically increase resources to handle the corresponding requests. When the load decreases (such as the CPU being below 40% in the past 30 minutes), the service can automatically reduce resources to reduce costs.
+4. **Don't guess the maximum load**
+    - AWS believes that the characteristic of cloud computing is that resources can be dynamically added and removed, so it is not necessary to set a resource limit for the system architecture. However, this does not mean that predicting the architecture's load capacity is not important; rather, it means that a scalable architecture should be designed. I once read a sharing from a Tencent architect who believed that a qualified architect should have the ability to evaluate the entire system's load capacity, and I fully agree with that.
 5. **管理架构变更**
-    - 现在设施即代码（infrastructure as code）可以很好的对整个架构进行很好的管理。就如同对代码的管理一样，可以有版本控制，甚至CICD。在这种强大的管理功能下，即使整个架构设施被破坏，只要相关的代码还在就可以很快重建。这在以前都是不可想象的，而这一切都多亏了云技术。
+    - Now that infrastructure as code can manage the entire architecture very well, just like managing code, it can have version control and even CI/CD. With this powerful management capability, even if the entire architecture is destroyed, it can be quickly rebuilt as long as the relevant code is still available. This was previously unimaginable, and all of this is thanks to cloud technology.
 
-在aws的Security Pillar白皮书中还花了不少篇幅分析如何做到从2个9直到到5个9的可靠性。从监控，备份，部署，伸缩，容灾处理等多个角度来介绍如何达到相应的可靠性标准。用户可以根据系统的重要程度以及成本预算，选择合适的方案去达成相应的可靠性要求。这一块也是云的优势之一，提供了大量的选项，让用户可以很容易的根据自己的需求定制相应的架构。
+In the AWS Security Pillar whitepaper, a lot of attention is also given to how to achieve reliability from two nines to five nines. It introduces how to reach the corresponding reliability standards from multiple perspectives, such as monitoring, backup, deployment, scaling, and disaster recovery. Users can choose appropriate solutions to meet their reliability requirements based on their system's importance and cost budget. This is also one of the advantages of the cloud, providing many options that allow users to easily customize their architecture according to their needs.
 
-## 效能
+## Efficiency
 
-效能是一个好架构的非常重要的一个环节。Google曾做过一个试验，显示10条搜索结果的页面载入需要0.4秒，显示30条搜索结果的页面载入需要0.9秒，结果后者使得Google总流量和收入减少了20%。可见效能对网络业务的重要性。
+Efficiency is a crucial component of a good architecture. Google conducted an experiment that showed that loading a page with 10 search results took 0.4 seconds, while loading a page with 30 search results took 0.9 seconds. As a result, the latter option caused a 20% decrease in Google's total traffic and revenue. This demonstrates the importance of efficiency in web-based businesses.
 
-以一个网页应用为例，当用户在浏览器输入网址敲击回车的时候，一系列的请求就会发出。首先如果本地没有缓存域名，要先对相应域名进行解析。这一步是通过对DNS发出请求，然后DNS会返回相应域名所对应的ip地址。之后浏览器会尝试与这个ip地址的服务器进行tcp连接，也就是大家都熟悉的3次握手。如果是https协议，还要对加密方式进行沟通。最后建立连接之后，服务器将会生成响应并返回给客户端浏览器。在生成响应返回这块又分为静态和动态响应之分。静态响应相对简单，一般就是返回一些静态的内容，比如图片文件，基本上每个用户看到都是一样的东西。这种可以用各种方式cache起来，常见的就是CDN（content delivery network），可以将文件分布式的cache在世界各地的机器上，当用户请求的时候可以直接从近的服务器获得相应文件。从而大大提高响应速度。至于动态的内容就相对复杂一些，往往牵涉业务逻辑，还依赖于数据库等服务。传统的网页动态响应的最大瓶颈一般是数据库这一块。为了提高响应速度，一般的优化方法是加入缓存(比如说redis), 读写分离，甚至分表分库等等。以上都是一般的优化方案，具体的优化还要根据业务的情况具体分析。
+For example, in a web application, when a user enters a URL into their browser and hits "enter," a series of requests are sent. Firstly, if the domain is not cached locally, the corresponding domain must be resolved. This is done by sending a request to the DNS server, which returns the IP address associated with the domain. Then the browser attempts to establish a TCP connection with the server at that IP address, which involves the familiar three-way handshake. If the protocol is HTTPS, the encryption method must also be negotiated. Once the connection is established, the server generates a response and sends it back to the client's browser. The response generation and delivery process is divided into static and dynamic responses. Static responses are relatively simple and generally involve returning some static content, such as image files, which are the same for every user. These can be cached in various ways, such as using a content delivery network (CDN), which can cache files on machines distributed worldwide so that users can obtain the corresponding files directly from the nearest server when they request them, greatly improving response speed. Dynamic content, on the other hand, is usually more complex and involves business logic and dependencies on other services, such as databases. The traditional bottleneck for dynamic web responses is usually the database. To improve response speed, typical optimization methods include adding a cache (such as Redis), read/write separation, or even table and database splitting. These are all general optimization solutions, and specific optimizations depend on the specifics of the business.
 
-通过这个例子我们知道效能的提高是方方面面。一个好的架构应该要能够比较容易对各个部分进行优化。这一块我觉得是微服务架构的一个优势。每个服务可以使用最有利于效能的框架和技术，甚至是资源。比如数据库可以使用专门优化过高io的机器，对延迟敏感的服务可以部署到高带宽的网络等等。而云的一大好处是，云服务上有足够的技术和人力，提供更新更好的技术给用户使用。这种是一般公司无法做到的。
+Through this example, we can see that improving efficiency involves many aspects. A good architecture should make it relatively easy to optimize each part. This is an advantage of microservice architecture, in my opinion. Each service can use the most efficient framework, technology, or even resources. For example, a dedicated machine optimized for high IO can be used for databases, while services sensitive to latency can be deployed on high-bandwidth networks. Another advantage of cloud services is that they have sufficient technology and personnel to provide users with updated and better technologies, which is something that most companies cannot achieve.
 
+## Cost Optimization
 
-## 成本优化
+Compared to the other four pillars, cost is probably the least mentioned topic among domestic architects. AWS believes that a good architecture should make use of all resources as efficiently as possible. For a company to succeed, cost-saving is very important. Even if a business is successful, if it burns through money like a bottomless pit, it will eventually be eliminated.
 
-相对于其他4个基石，成本这块应该是国内架构师最少提及的。aws认为一个好的架构应该是将所有资源都近可能的利用到。而一个企业成功，开源节流是十分重要的。即使业务成功，但是烧钱如无底洞，那么最后也会被淘汰。
+Therefore, while improving reliability and performance, we also need to ask how much help this improvement will bring to the business. Is it worth investing how much cost to achieve corresponding reliability and performance improvements? What is the company's critical business? How to maximize business profits with the minimum cost?
 
-所以在提高可靠性和性能的同时，我们也要问一下，这种提高对业务的帮助有多大？到底值得投入多少成本去换取相应可靠性和性能的提高？公司的关键业务是什么？如何用最小的成本去做到业务利润的最大化？
+To achieve cost optimization, powerful monitoring and corresponding elastic scaling are essential. I understand that this is also one of the biggest advantages of cloud services. Enterprises can timely increase or decrease the computing, storage, and even network bandwidth resources they need according to demand, which is difficult for traditional on-premise enterprise architectures to achieve. At the same time, a deep understanding of the business is also required. In reality, you cannot be given unlimited resources to improve performance and reliability. You can only guarantee the important business paths first and then use this as a basis to further optimize and improve the system's reliability and efficiency. Therefore, some people say that good architecture is not built in one fell swoop but evolves over time.
 
-要做到成本优化，强大的监控以及相应的弹性伸缩是必不可少的。我理解这一块也是云服务的最大的优势之一。企业可以根据需求及时的增加或者减少所需要的计算，储存，甚至是网络带宽资源。而这些都是传统企业架构（on premise）难以企及的。同时还要对业务有深入的了解。因为实际上不可能给你无限的资源去提高性能和可靠性。只能先对重要的业务路径进行保证，之后以此为基点进一步优化，提高系统的可靠性核和效能。所以有人说，好的架构不是一蹴而就，而是演进来的。
+## Written at the end
 
-
-## 写在后面
-
-写到越后面，越感觉这是一篇介绍云服务有多强大的文章。现在不使用云服务感觉就很难达到aws对于好架构的标准，对于小公司更是可望不可及。但是有了云服务后，即使不是大公司也可能做到好的架构。云，大势所趋。
+The more I write, the more I feel that this is an article introducing the power of cloud services. Nowadays, it feels difficult to meet AWS's standards for good architecture without using cloud services, especially for small companies. However, with cloud services, even small companies can achieve good architecture. It's not surprising that the cloud has become so popular and mainstream in such a short amount of time.
