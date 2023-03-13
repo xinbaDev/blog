@@ -3,7 +3,7 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - master
+      - eng
 
 jobs:
   build-and-deploy:
@@ -28,6 +28,6 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@4.1.1
         with:
           token: ${{ secrets.ACCESS_TOKEN }}
-          branch: master
+          branch: eng
           folder: public
           repository-name: xinbaDev/xinba.github.io
