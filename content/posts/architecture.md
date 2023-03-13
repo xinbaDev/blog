@@ -1,17 +1,16 @@
 ---
-title: "记一次服务器事故以及对架构的一些思考"
-date: 2020-02-23T21:30:11+11:00
-summary: 在2020.02.20的早上8点半左右有用户报告网站无法访问，8点40分收到通知，赶紧通过手机访问网站确认，主站的前端服务器出了问题。于是紧急通过远程连接登录到aws的云端服务器，发现服务器仍然在运行，排除EC2服务器挂掉的情况。接着查node server， 发现PM2还在运行，但是application已经挂掉。 于是怀疑是硬盘空间不足。一查硬盘空间，果然已经满了。于是马上通过aws的console加空间，然后重启服务器。重启服务器以及相关应用后，服务器于8点49分恢复正常访问。
+Title: "An incident with a server and some thoughts on architecture"
+Date: 2020-02-23T21:30:11+11:00
+Summary: On the morning of February 20th, 2020, at 8:40am, I received a notification that the website was inaccessible. I quickly logged in and found that the frontend server of the main site was having issues. I urgently connected remotely to the AWS cloud server and found that the server was still running, ruling out the possibility of the EC2 server crashing. I then checked the Node server and found that PM2 was still running, but the application had crashed. I suspected that the hard drive was full. Upon checking the hard drive, it was indeed full. I immediately added space through the AWS console and restarted the server. After restarting the server and related applications, the server was back to normal at 8:49am.
 draft: false
 ---
 
-在2020.02.20的早上8点半左右有用户报告网站无法访问，8点40分收到通知，赶紧通过手机访问网站确认，主站的前端服务器出了问题。于是紧急通过远程连接登录到aws的云端服务器，发现服务器仍然在运行，排除EC2服务器挂掉的情况。接着查node server， 发现PM2还在运行，但是application已经挂掉。 于是怀疑是硬盘空间不足。一查硬盘空间，果然已经满了。于是马上通过aws的console加空间，然后重启服务器。重启服务器以及相关应用后，服务器于8点49分恢复正常访问。
+On the morning of February 20th, 2020, at 8:40am, I received a notification that the website was inaccessible. I quickly logged in and found that the frontend server of the main site was having issues. I urgently connected remotely to the AWS cloud server and found that the server was still running, ruling out the possibility of the EC2 server crashing. I then checked the Node server and found that PM2 was still running, but the application had crashed. I suspected that the hard drive was full. Upon checking the hard drive, it was indeed full. I immediately added space through the AWS console and restarted the server. After restarting the server and related applications, the server was back to normal at 8:49am.
+## Analysis of the Cause of the Accident
 
-## 事故的原因分析
+In order to avoid such situations in the future, it is necessary to understand the cause of the accident. Why did the server crash due to a full hard drive? Theoretically, even if there is not enough hard disk space, as long as there is no operation that writes to the hard disk, there should be no error. Even if there is a write to the hard disk, this exception should not cause the front-end server to crash. What processes, operating systems, PM2, and server applications were involved in this accident?
 
-为了避免以后出现这种情况，必须弄清楚事故发生的原因。为什么硬盘满了导致服务器挂掉？理论上说，即使没有硬盘空间不够，只要没有写硬盘的操作就不会出错。就算发生了写硬盘，这个异常按道理也不应该导致前端服务器挂掉。到底中间经历哪些过程，操作系统，PM2，服务器应用在这次事故中都扮演的什么角色？
-
-首先让我们回到事故现场：
+First, let's go back to the scene of the accident:
 
 PM2        | 2020-02-19 17:45:32: --- PM2 global error caught ---------------------------------------------------
 PM2        | 2020-02-19 17:45:32: Time                 : Wed Feb 19 2020 17:45:32 GMT+0100 (AEDT)
@@ -43,11 +42,11 @@ PM2        |     at Parser.<anonymous> (/usr/local/lib/node_modules/pm2/node_mod
 PM2        |     at emitOne (events.js:96:13)  
 
 
-这是事故发生时候，PM2的log。整个log基本上可以分成两部分。首先第一步是PM2抓到一个全局的错误（没有被处理的异常），接下来第二步触发PM2的resurrecting。在这个过程中，因为/home/ubuntu/.pm2/dump.pm2的permission问题，导致current process  list的保存失败，最终的结果是服务器应用没有被正常重启。permission的问题应该是安装PM2时候没有正确安装导致，这个定时炸弹从服务器安装开始（2年前）一直存在。但是即使permission没问题，因为硬盘空间不足，保存的过程也会失败。
+This is the log of PM2 at the time of the accident. The entire log can be divided into two parts. The first step is that PM2 catches a global error (unhandled exception), and the second step triggers PM2's resurrecting. During this process, due to permission issues with /home/ubuntu/.pm2/dump.pm2, the saving of the current process list fails, resulting in the server application not being restarted properly. The permission issue should have been caused by incorrect installation of PM2, and this time bomb has existed since the installation of the server (2 years ago). Even if there is no permission problem, the saving process will fail due to insufficient disk space.
 
-第二步相对容易理解，第一步的全局错误又是怎么产生的呢？
+But how was the global error in the first step generated?
 
-首先这error是async.js抛出来的：
+Firstly, this error was thrown by async.js.
 
 ```javascript=
 function onlyOnce(fn) {
@@ -60,8 +59,7 @@ function onlyOnce(fn) {
 }
 ```
 
-这个函数的作用就是保证callback只被运行一次，如果出现多次运行，或者传入null，都会触发异常抛出，由调用者来处理这个异常。这个函数会被在async中waterfall的函数调用：
-
+The purpose of this function is to ensure that the callback is only executed once. If it is executed multiple times or null is passed in, an exception will be thrown, which the caller should handle. This function will be called in the async waterfall function.
 
 ```javascript=
 var waterfall = function(tasks, callback) {
@@ -89,8 +87,7 @@ var waterfall = function(tasks, callback) {
 
 ```
 
-这个waterfall是作用是异步的运行所有tasks，而tasks是an array of functions，由调用者传入。
-而waterfall函数又被PM2的startlogging调用：
+The function of this waterfall is to asynchronously run all tasks, where tasks are an array of functions passed in by the caller. The waterfall function is then called by PM2's startlogging function.
 
 ```javascript=
 startLogging : function(stds, callback) {
@@ -153,26 +150,24 @@ startLogging : function(stds, callback) {
   },
 
 ```
-通过阅读源码，可以发现flows就是waterfall异步运行的tasks。而根据pm2 的log, 导致出现异常的地方就是在createWriteStream中处理异常的next(err)所触发。createWriteStream触发异常好理解，因为硬盘不足。但是next是什么呢，经过分析，next正是onlyOnce(next)。简单得讲，waterfall中运行onlyOnce(next)这个callback,   在运行中出现异常，导致再次运行onlyOnce(next)！ 如果没有看懂，可以看看这个简化版的issue： https://github.com/caolan/async/issues/1611
+By reading the source code, we can discover that flows are tasks that run asynchronously in a waterfall. According to the logs of PM2, the place where the exception occurred was triggered by next(err) handling in createWriteStream(). It's easy to understand that createWriteStream() triggers an exception because of disk space. But what is next? After analysis, next is actually onlyOnce(next). In simple terms, while running the onlyOnce(next) callback in the waterfall, an exception occurs, which causes onlyOnce(next) to run again! If you don't understand, you can check out this simplified issue: https://github.com/caolan/async/issues/1611.
 
-分析到这里整个事故过程就比较清楚了。首先是PM2在logging的时候，因为空间不足抛出异常，而这个异常又触发async中的异常。PM2没有考虑到这种异常的情况，并没有处理，导致resurrect。
-
-
-在测试过程当中，我发现最新的PM2并没有这个bug，一查其实这个bug已经在这个[commit](https://github.com/Unitech/pm2/commit/374f88ba0af02f679888fce4496c183a45b9cfd7#diff-92c9bcfa02228bd9e146b5178ac63dd8)中被fix了。PM2的处理方式是catch这个异常，然后通过console安静地把异常显示出来，不让其成为一个全局的异常导致服务挂掉。
+Analyzing up to this point, the whole incident process becomes clearer. Firstly, when PM2 is logging, an exception is thrown due to insufficient space, and this exception triggers an exception in async. PM2 did not consider this type of exception and did not handle it, resulting in a resurrection.
 
 
-## 事故总结以及未来架构的设想
+During the testing process, I found that the latest version of PM2 did not have this bug. Upon investigation, I discovered that this bug had actually been fixed in this [commit](https://github.com/Unitech/pm2/commit/374f88ba0af02f679888fce4496c183a45b9cfd7#diff-92c9bcfa02228bd9e146b5178ac63dd8). PM2 handles this issue by catching the exception and then quietly displaying it through the console, preventing it from becoming a global exception that could cause the service to crash.
 
-发生这种事故有多方面的原因，硬盘空间不足是导火索。如果硬盘空间充足不会触发这个PM2这个bug。如果PM2有合理处理这个异常，硬盘空间不足不会引起服务器挂掉。这个事故给我们的启示是，并不是所有library都是可靠的。在使用所有libaray的时候都要assume他不可靠。连PM2这种被多年广泛使用的PRODUCTION GRADE的应用都存在bug，何况是其他程序。错误一定是会发生的，我们能做的就是通过好的架构，避免这中错误带来的影响。前端服务器的架构一直用最开始的一个node server打天下，存在单点故障的问题，而且没有监控，导致不能提早发现预防。存在相同问题的还有财经服务器，cms服务器。
 
-这次事故也让我反思，如果我们的一个后端服务，例如api服务器挂了，我有没有办法尽量减少他的影响。好的架构应该能够减少事故出现的机率，也能减少事故造成的影响。我的想法是尽量分离不相关的业务逻辑到不同的服务器上。其实一开始后端服务器也和前端服务器一样，一台服务器单打独斗。后来我意识到这个问题，开始慢慢把新功能都分散到不同的服务器上。但是仍然做的不够。如果现在主站的最主要的API服务器挂掉，那么网站的大约50%的内容仍然会受到影响。分离这些业务逻辑除了减少事故发生的影响，还有个好处，那就是可以根据不同的业务需求和特点来合理分配资源。
+## Summary of the accident and ideas for future architecture
 
-比如对于前端服务器，其本身的特点是大部分都是读取，基本上都是传输html,js等静态文件，只有一些服务器渲染的内容需要动态生成。这时就适合把相对静态的部分放到CDN上。之前图片已经放在CDN上了，但是其实连html页面，js，css这些相对静态的内容也应该放到CDN上。
+There were multiple factors that caused the accident, and insufficient hard disk space was the catalyst. If there was enough disk space, the PM2 bug wouldn't have been triggered. If PM2 had handled this exception reasonably, insufficient disk space wouldn't have caused the server to crash. The lesson we learned from this accident is that not all libraries are reliable, and when using any library, we should assume that it is unreliable. Even PM2, a widely used production-grade application for many years, has bugs, not to mention other programs. Errors are bound to happen, and what we can do is to avoid the impact of these errors through good architecture. The front-end server architecture has been using the same node server since the beginning, which has a single point of failure and no monitoring, leading to the inability to detect and prevent it in advance.
 
-具体来说，目前前端的服务主要可以分为两类，一种是相对静态的资源（主页html，js，css等），另一种是相对动态的内容，涉及服务器渲染的部分。其中相对静态的部分可以放在s3上，然后通过cloudfront去访问，而需要服务器渲染的部分还是可以继续放在原来服务器上，但是请求需要先经过cloudfront，通过cloudfront去server获取资源。cloudfront可以设置监控，当cloudfront获取资源失败，可以发送邮件或者短信通知，而不是等用户回报。（其实还可以做多点部署来进一步减少事故的可能性，目前后端的服务已经开始使用kubernetes来进行多点部署，但是对于前端服务，要改动的地方可能会较多）。这样可以实现这部分静态资源的高可用，提高服务的健壮性。这样即使出现服务器单点故障，虽然动态渲染的部分仍然会受到影响，但是通过主网址访问的用户仍然能看到网页，不会出现什么都看不到的情况。
+This accident also made me reflect on whether I could minimize the impact if one of our backend services, such as the API server, went down. Good architecture should be able to reduce the likelihood of accidents and the impact they cause. My idea is to try to separate unrelated business logic into different servers as much as possible. Initially, the backend server was like the front-end server, a single server fighting alone. Later, I realized this problem and gradually dispersed new features to different servers. But I still didn't do enough. If the main API server of the website goes down now, about 50% of the content will still be affected. Separating these business logics not only reduces the impact of accidents but also has the advantage of allocating resources reasonably according to different business needs and characteristics.
 
-架构的简单设想图
+For example, for the front-end server, most of its features are reading, basically transmitting static files such as HTML and JS, and only some server-rendered content needs to be dynamically generated. This is suitable for putting the relatively static part on the CDN. Previously, the images were already on the CDN, but even relatively static content such as HTML pages, JS, and CSS should also be placed on the CDN.
+
+Specifically, the current front-end service can be mainly divided into two categories: relatively static resources (homepage HTML, JS, CSS, etc.) and relatively dynamic content involving server rendering. The relatively static part can be placed on S3 and accessed through CloudFront, while the part that needs server rendering can still be placed on the original server, but the request needs to go through CloudFront to obtain resources from the server. CloudFront can be monitored, and when it fails to obtain resources, it can send email or SMS notifications, instead of waiting for users to report it. (In fact, multiple deployments can be made to further reduce the possibility of accidents. The backend service has begun to use Kubernetes for multiple deployments, but there may be more changes to be made for the front-end service). This can achieve high availability of these static resources and improve the robustness of the service. Even if there is a single point of failure on the server, users who access through the main URL can still see the website, and there will be no situation where nothing can be seen.
+
+Simple architectural diagram
 
 ![](https://i.imgur.com/OtS5oFT.png)
-
-当然任何涉及到架构的改动都是有风险和成本的。但是通过这两天（周四，周五）的调研和实验，我们已经在staging上初步实现了cloudfront的中间代理，这让我相信这个架构的迁移是可以实现的，而且成本应该也是相对较小的。
