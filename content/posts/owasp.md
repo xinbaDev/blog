@@ -1,7 +1,7 @@
 ---
 Title: "OWASP TOP 10(2017)"
 Date: 2019-09-21T17:21:11+11:00
-Summary: "OWASP Top 10 - 2017 The Ten Most Critical Web Application Security Risks" summarizes the ten most likely, common, and dangerous vulnerabilities in web applications. Although it has been two years since the report was released, it is still very meaningful for introducing web security. Especially for engineers who are new to web security, this report is a very good guide that can help IT companies and development teams standardize the application development process and testing process, and improve the security of web products. This article will classify and analyze these vulnerability types and provide some of my personal opinions. 
+Summary: <OWASP Top 10 - 2017 The Ten Most Critical Web Application Security Risks> summarizes the ten most likely, common, and dangerous vulnerabilities in web applications. Although it has been two years since the report was released, it is still very meaningful for introducing web security. Especially for engineers who are new to web security, this report is a very good guide that can help IT companies and development teams standardize the application development process and testing process, and improve the security of web products. This article will classify and analyze these vulnerability types and provide some of my personal opinions. 
 draft: false
 ---
 
