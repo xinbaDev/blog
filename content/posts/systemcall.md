@@ -80,7 +80,6 @@ static inline void __down_write(struct rw_semaphore *sem)
     long tmp;
 
     // Add RWSEM_ACTIVE_WRITE_BIAS (0xffffffff00000001) to sem->count and return the incremented value. 
-    // 并返回增加之后的值
     // it means that the write lock was already occupied, 
     // and rwsem_down_write_failed is called. 
     // For more details, see https://0xax.gitbooks.io/linux-insides/SyncPrim/linux-sync-5.html
@@ -96,7 +95,6 @@ static inline void __down_write(struct rw_semaphore *sem)
  */
 void up_write(struct rw_semaphore *sem)
 {
-    // rwsem_acquire涉及到validator，这里不做进一步分析， 有兴趣可以参考：
     // https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt
     rwsem_release(&sem->dep_map, 1, _RET_IP_);
 
