@@ -31,4 +31,4 @@ jobs:
           token: ${{ secrets.ACCESS_TOKEN }}
           branch: master
           folder: public
-          repository-name: xinbaDev/xinba.github.io
+          repository-name: xinbaDev/posts
