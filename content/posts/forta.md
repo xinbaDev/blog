@@ -1,5 +1,5 @@
 ---
-title: "forta contest"
+title: "Forta contest"
 date: 2022-06-08T19:39:11+11:00
 summary: Before discussing the Forta competition, let me introduce Forta first. So far, Forta has been developed for about a year, with a total of 1330 commits, and the main developers are two people. The development language is GO. This is not a particularly large project, and its functions are relatively clear. It is mainly used for monitoring. In addition, GO is inherently a highly engineering-oriented language, so reading it is not too difficult.
 draft: false
