@@ -1,4 +1,4 @@
-baseURL = "https://xinbadev.github.io/xinba.github.io"
+baseURL = "https://xinba.github.io/posts"
 languageCode = "en-us"
 title = "Alex's Blog"
 theme = "tale"
