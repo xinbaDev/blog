@@ -17,9 +17,21 @@ Although I had experience using cheat engine and had successfully created a prog
 
 After successfully extracting the text from the memory, I decided to take one step further. Why not let ChatGPT be my Japanese teacher and teach me the Japanese sentences in the game? I asked ChatGPT to imagine itself as my Japanese teacher and help me break down each Japanese sentence I sent, teaching me any grammar and vocabulary used. Once again, ChatGPT delivered as I expected. It was really helpful, as it made the learning process more enjoyable and saved me tons of time searching online by myself. With its help, I managed to learn a great deal of Japanese while still enjoying the game. This wouldn't have been possible before. I can't praise enough how good ChatGPT has been in helping me learn Japanese.
 
+## Make it speak
+
+The game I played was quite old and did not have voice actor speaking in most of the time. This was quite disappointing as I wanted to improve my Japanese listening skill as well. After spending some time on searching for a solution, it turned out there was already an open source project that did that! The project which had an interesting name [ChatWaifu](https://github.com/cjyaddone/ChatWaifu/tree/main) was powered by ChatGPT with Moegoe TTS. It did not take long for me to implement my own version and tried it out. The result was great! When there was not voice actor speaking, I can still hear the AI-generated voice, which sounds like that of a native speaker, with just a click of a button.
+
 ## How it helped me create the GUI
 
-When creating the tools to extract the text, one of the challenges I faced was developing a visual interface, a GUI, to help me use it easily. Although I was aware of some libraries, such as Tkinter, that could assist me in creating it, I had no prior experience using them. Learning new tools and techniques is what a programmer should do in their daily life, but it would take time. Moreover, if I wanted to create an elegant interface, it would undoubtedly require a lot more time to tweak it. This is where ChatGPT came to the rescue. With its help, I could create an elegant interface that suited my needs in no time. Although it's not perfect, I was satisfied with what I had achieved with the help of ChatGPT in the relatively short time I had allocated.
+When creating the tools to extract the text, one of the challenges I faced was developing a visual interface, a GUI, to help me use it easily. Although I was aware of some libraries, such as Tkinter, that could assist me in creating it, I had no prior experience using them. Learning new tools and techniques is what a programmer should do in their daily life, but it would take quite some time given I have no prior experience. Moreover, if I wanted to create an elegant interface, it would undoubtedly require a lot more time to tweak it. This is where ChatGPT came to the rescue. With its help, I could create an elegant interface that suited my needs in no time. Although it's not perfect, I was satisfied with what I had achieved with the help of ChatGPT in the relatively short time I had spent.
+
+### how it looks like before
+
+![](https://i.imgur.com/zG3HsH7.jpg) 
+
+### how it looks like with the help of Chatgpt
+
+![](https://i.imgur.com/YXehBWF.png) 
 
 ## Final thoughts
 
