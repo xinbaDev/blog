@@ -2,7 +2,7 @@
 Title: "How Chatgpt helps me create a game text extractor and teach me japanese"
 Date: 2023-05-04T23:15:32+11:00
 Draft: false
-Summary: 
+Summary: Recently, I have been playing a game called “The Legend of Heroes - Trails of Cold Steel,” a JRPG that I hope can help me learn some Japanese. I ended up creating a game text extractor to make it easier for me to translate the in-game text. When combined with ChatGPT, it becomes a very helpful Japanese language teaching app. I can’t help but record what I have learned during this process.
 ---
 
 Recently, I have been playing a game called "The Legend of Heroes: Trails of Cold Steel," a JRPG that I hope can help me learn some Japanese. I ended up creating a game text extractor to make it easier for me to translate the in-game text. When combined with ChatGPT, it becomes a very helpful Japanese language teaching app. I can't help but record what I have learned during this process.
