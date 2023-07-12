@@ -1,7 +1,7 @@
 ---
 Title: "How Chatgpt helps me create a game text extractor and teach me japanese"
 Date: 2023-05-04T23:15:32+11:00
-Draft: true
+Draft: false
 Summary: 
 ---
 

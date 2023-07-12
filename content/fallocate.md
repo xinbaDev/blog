@@ -70,7 +70,7 @@ cat blktrace.log | grep 'D' | grep 'W' > result.log
 ```
 
 
-对比 [result (xfs)]
+compare with [result (xfs)]
 ```
 8,1 0 70 0.256951000 0 D WSM 40162600 + 3 [swapper/0]
 8,1 1 50 0.271551873 12575 D WS 1311 + 8 [dd]
