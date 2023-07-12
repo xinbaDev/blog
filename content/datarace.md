@@ -1,7 +1,7 @@
 ---
 Title: "Uber's Study on Data Race Patterns in Go"
 Date: 2022-07-17T10:27:22+11:00
-Draft: False
+Draft: True
 Summary: While browsing through Uber's technology blog recently, I came across an interesting article titled "Data Race Patterns in Go." The article categorizes common instances of data races that occur in all of Uber's Go projects. Data races are not unfamiliar to me, as mishandling concurrent reads and writes to the same data can lead to data races. I have heard that Go has issues with data races, but I haven't seen any specific examples until now. Additionally, Uber is a large company with many Go projects, including the open-source Zap project and the previously mentioned Jaeger distributed monitoring project, so they likely have a lot of experience with Go. Therefore, I am interested in Uber's analysis based on their own experience with Go projects.
 ---
 

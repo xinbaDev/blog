@@ -29,7 +29,6 @@ let a = [{hack:0},1,2,3,4];
 let refcopy = [a[0]]; // refcopy points to {hack:0}
 // Throw an exception
 a.__defineSetter__(3,()=>{throw 1;}); 
-// 下面的排序会触发异常抛出，具体如何触发下文会有介绍
 try {
 	a.sort(function(v){if (v == a[0]) return 0; return 1;}); 
 }

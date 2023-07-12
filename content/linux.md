@@ -152,7 +152,6 @@ int __alloc_fd(struct files_struct *files,
 repeat:
         // get ftables from files
 	fdt = files_fdtable(files);
-        // 从0开始
 	fd = start;
         // save fd in files
 	if (fd < files->next_fd)

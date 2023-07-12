@@ -2,7 +2,7 @@
 Title: "Systematic Reflections on Current Work"
 Date: 2022-04-02T20:16:00+11:00
 Summary: After several years of working in the IT industry, I have not systematically reflected on my work during these years. I think it is a good time for me to review my work during these years. This article mainly discusses my summary and thoughts on my work over the years, starting from several common interview questions.
-draft: true
+draft: False
 ---
 
 After several years of working in the IT industry, I have not systematically reflected on my work during these years. I think it is a good time for me to review my work during these years. This article mainly discusses my summary and thoughts on my work over the years, starting from several common interview questions.
