@@ -1,6 +1,6 @@
 ---
 title: "Debugging and Optimization of SQL (Postgres query planner)"
-date: 2021-06-13T19:33:00+11:00
+date: 2023-06-13T19:33:00+11:00
 summary: Recently, I encountered a very interesting SQL problem at work. The same raw SQL query took significantly different execution times. Through debugging and research of this problem, I gained a deeper understanding of the SQL execution process (Postgres) and corresponding optimization techniques.
 draft: false
 ---
@@ -18,7 +18,7 @@ FROM "marketdata" INNER JOIN "stock" ON
 ("marketdata"."code_id" = "stock"."code") 
 WHERE (
     "stock"."is_hot" = true AND 
-    "marketdata"."date" BETWEEN '2019-06-25T10:00:00' AND '2019-06-25T16:00:00') 
+    "marketdata"."date" BETWEEN 'XXXX-XX-XXT10:00:00' AND 'XXXX-XX-XXT16:00:00') 
 ORDER BY "marketdata"."date" ASC
 ```
 
@@ -49,10 +49,10 @@ Sort  (cost=119007.54..119066.60 rows=23621 width=241) (actual time=116.795..127
               Filter: is_hot"
               Rows Removed by Filter: 2492"
         ->  Bitmap Heap Scan on marketdata  (cost=24.31..1138.09 rows=294 width=241) (actual time=0.107..0.503 rows=371 loops=100)"
-              Recheck Cond: (((code_id)::text = (stock.code)::text) AND (date >= '2019-06-25 00:00:00.331101+00'::timestamp with time zone) AND (date <= '2019-06-25 08:08:55.331109+00'::timestamp with time zone))"
+              Recheck Cond: (((code_id)::text = (stock.code)::text) AND (date >= 'XXXX-XX-XX 00:00:00.331101+00'::timestamp with time zone) AND (date <= 'XXXX-XX-XX 08:08:55.331109+00'::timestamp with time zone))"
               Heap Blocks: exact=37119"
               ->  Bitmap Index Scan on marketdata_code_id_date_e4afd606_idx  (cost=0.00..24.23 rows=294 width=0) (actual time=0.068..0.068 rows=371 loops=100)"
-                    Index Cond: (((code_id)::text = (stock.code)::text) AND (date >= '2019-06-25 00:00:00.331101+00'::timestamp with time zone) AND (date <= '2019-06-25 08:08:55.331109+00'::timestamp with time zone))"
+                    Index Cond: (((code_id)::text = (stock.code)::text) AND (date >= 'XXXX-XX-XX 00:00:00.331101+00'::timestamp with time zone) AND (date <= 'XXXX-XX-XX 08:08:55.331109+00'::timestamp with time zone))"
 Planning time: 0.704 ms"
 Execution time: 135.848 ms"
 
@@ -73,7 +73,7 @@ Sort  (cost=725081.36..725852.57 rows=308485 width=241) (actual time=44276.683..
   ->  Hash Join  (cost=457.44..625254.48 rows=308485 width=241) (actual time=37102.527..44274.947 rows=1125 loops=1)"
         Hash Cond: ((marketdata.code_id)::text = (stock.code)::text)"
         ->  Seq Scan on marketdata  (cost=0.00..619398.55 rows=616970 width=241) (actual time=36321.218..44015.861 rows=783850 loops=1)"
-              Filter: ((date >= '2019-06-25 00:00:00.331101+00'::timestamp with time zone) AND (date <= '2019-06-25 08:08:55.331109+00'::timestamp with time zone))"
+              Filter: ((date >= 'XXXX-XX-XX 00:00:00.331101+00'::timestamp with time zone) AND (date <= 'XXXX-XX-XX 08:08:55.331109+00'::timestamp with time zone))"
               Rows Removed by Filter: 18213401"
         ->  Hash  (cost=441.12..441.12 rows=1306 width=4) (actual time=4.070..4.070 rows=3 loops=1)"
               Buckets: 2048  Batches: 1  Memory Usage: 17kB"
