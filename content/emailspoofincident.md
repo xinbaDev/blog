@@ -1,7 +1,7 @@
 ---
 Title: "An incident of Email Spoofing"
 Date: 2023-01-09T13:49:22+11:00
-Draft: False
+Draft: True
 Summary: Recently, one of our company's email accounts was spoofed, and a large amount of spam email was sent out. Since the emails were sent in the middle of the night, it wasn't discovered until the next morning when the inbox was filled with "delivery failure" emails from the postmaster. At first, we thought the email account was hacked, so we quickly reset the password. However, we later ruled out this possibility because our company's email accounts have two-factor authentication enabled, which makes it difficult for hackers to log in even if they have the password. Upon closer inspection, we found that most of the emails had not passed SPF verification, indicating that they were being spoofed. Afterwards, we confirmed that the emails were not sent from our side by querying the message ID of the returned emails in Microsoft Exchange, thus confirming that our email was spoofed.
 ---
 
