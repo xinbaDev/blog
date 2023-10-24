@@ -1,6 +1,6 @@
 ---
 title: "Debugging and Optimization of SQL (Postgres query planner)"
-date: 2023-06-13T19:33:00+11:00
+date: 2023-01-13T19:33:00+11:00
 summary: Recently, I encountered a very interesting SQL problem at work. The same raw SQL query took significantly different execution times. Through debugging and research of this problem, I gained a deeper understanding of the SQL execution process (Postgres) and corresponding optimization techniques.
 draft: false
 ---
