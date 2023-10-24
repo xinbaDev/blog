@@ -2,7 +2,7 @@
 Title: "An incident with a server and some thoughts on architecture"
 Date: 2020-02-23T21:30:11+11:00
 Summary: On the morning of February 20th, 2020, at 8:40am, I received a notification that the website was inaccessible. I quickly logged in and found that the frontend server of the main site was having issues. I urgently connected remotely to the AWS cloud server and found that the server was still running, ruling out the possibility of the EC2 server crashing. I then checked the Node server and found that PM2 was still running, but the application had crashed. I suspected that the hard drive was full. Upon checking the hard drive, it was indeed full. I immediately added space through the AWS console and restarted the server. After restarting the server and related applications, the server was back to normal at 8:49am.
-draft: false
+draft: true
 ---
 
 On the morning of February 20th, 2020, at 8:40am, I received a notification that the website was inaccessible. I quickly logged in and found that the frontend server of the main site was having issues. I urgently connected remotely to the AWS cloud server and found that the server was still running, ruling out the possibility of the EC2 server crashing. I then checked the Node server and found that PM2 was still running, but the application had crashed. I suspected that the hard drive was full. Upon checking the hard drive, it was indeed full. I immediately added space through the AWS console and restarted the server. After restarting the server and related applications, the server was back to normal at 8:49am.
