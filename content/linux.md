@@ -1,6 +1,6 @@
 ---
 Title: "What exactly happens when the 'open' system call is invoked? (Linux kernel study notes)"
-Date: 2020-12-21T16:50:11+11:00
+Date: 2021-12-22T16:50:11+11:00
 Summary: In computing systems, the three most important resources are CPU, memory, and disk, which are also the three types of resources that programming languages frequently deal with. For example, CPU corresponds to a language's concurrency (such as GO's reputation for high concurrency), memory involves a language's garbage collection mechanism, and disk involves creating/deleting files, etc. It can be said that compared to the first two, the disk part is relatively simple. Taking Python as an example, the code for a simple program that opens/creates a file, writes "hello world", and then closes the file is as follows
 draft: true
 ---
