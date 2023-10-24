@@ -7,7 +7,7 @@ draft: false
 
 A few days ago, a significant incident disrupted Cloudflare's network, affecting numerous vital websites and even causing a temporary outage on Discord. Subsequently, I came across tweets confirming that the issue indeed pertained to Cloudflare. The following day, Cloudflare promptly delivered a comprehensive incident report on their official blog, aligning with my anticipated standards of transparency and thorough analysis. In this context, I aim to document my reflections on this event.
 
-## The Incident and Its Causes:
+## The Incident and Its Causes
 
 As a DevOps professional, I am particularly interested in the Cloudflare's incident happened a few days ago. Based on the reputation of the company, I expected them to quickly release a detailed report about it, which they did(https://blog.cloudflare.com/cloudflare-outage-on-june-21-2022/). Cloudflare is a leader in its industry and has many excellent programmers and network engineers. Any modifications to their network have a set of release mechanisms. According to the article, changes to network settings require a request ticket, multiple rounds of review, a dry run, a small subnet release, and a step-by-step release in other networks. Despite these safeguards, the incident occurred during the latter part of a rollout that introduced a new architecture. This incident serves as a reminder that operational errors can happen to even the most innovative companies. It brings to mind past instances when major platforms like Twitter and Facebook experienced extended downtimes, illustrating the inherent challenges of maintaining websites and APIs.
 
