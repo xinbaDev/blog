@@ -6,3 +6,22 @@ theme = "tale"
 [Author]
     name = "Alex"
 
+defaultContentLanguage = 'en-us'
+defaultContentLanguageInSubdir = true
+[languages]
+  [languages.en]
+    contentDir = 'content/en'
+    disabled = false
+    languageCode = 'en-US'
+    languageDirection = 'ltr'
+    languageName = 'English'
+    title = "Alex's blog"
+    weight = 1
+  [languages.ja]
+    contentDir = 'content/ja'
+    disabled = false
+    languageCode = 'ja'
+    languageDirection = 'ltr'
+    languageName = '日本語'
+    title = 'Alexのブログ'
+    weight = 2

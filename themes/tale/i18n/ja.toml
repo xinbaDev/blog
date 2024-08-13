@@ -1,0 +1,11 @@
+[writtenBy]
+other = "作者"
+
+[on]
+other = "に"
+
+[generator]
+other = "<a href='https://gohugo.io'>Hugo</a> を使用して作成され、<a href='https://github.com/EmielH/tale-hugo/'>Tale</a> テーマを使用しています。"
+
+[publishdate]
+other = "{{ .PublishDate.Year }}年 {{ index $.Site.Data.months_ja (printf \"%d\" .PublishDate.Month) }} {{ .PublishDate.Day }}日  "
