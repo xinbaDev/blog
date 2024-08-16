@@ -28,10 +28,11 @@ jobs:
           pip install openai pyyaml
 
       - name: Translate Blog Content
+        if: contains(env.COMMIT_MESSAGE, '[translate]')
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          python scripts/translate.py
+          python translate.py
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
