@@ -29,7 +29,7 @@ def proofread_text(text):
             revised_lines.append("")  # Preserve empty lines
     return "\n".join(revised_lines)
 
-def proofread_blog_post(content, target_language):
+def proofread_blog_post(content):
     # Separate the front matter and the content
     front_matter_match = re.match(r"---\n(.*?)\n---\n(.*)", content, re.DOTALL)
     if not front_matter_match:
@@ -56,25 +56,26 @@ def proofread_blog_post(content, target_language):
 
 def get_changed_files():
     # Get the list of files changed in the last commit
-    result = subprocess.run(['git', 'diff', '--name-only', 'HEAD^', 'HEAD'], stdout=subprocess.PIPE)
+    result = subprocess.run(['git', 'diff', '--cached', '--name-only', '--diff-filter=ACM'], stdout=subprocess.PIPE)
     changed_files = result.stdout.decode('utf-8').splitlines()
     return [file for file in changed_files if file.startswith('content/en/') and file.endswith('.md')]
 
 def proofread_files():
+    
     changed_files = get_changed_files()
+    print(changed_files)
 
     for file_path in changed_files:
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
 
-        for lang_code, lang_name in languages.items():
-            revised_content = proofread_blog_post(content, lang_name)
+            revised_content = proofread_blog_post(content)
 
             # Write the revised content to the new file
-            revised_file_path = new_file_path.replace(".md", f".revised.md")
+            # revised_file_path = file_path.replace(".md", f".revised.md")
 
-            with open(revised_file_path, 'w', encoding='utf-8') as revised_file:
+            with open(file_path, 'w', encoding='utf-8') as revised_file:
                 revised_file.write(revised_content)
 
-if __name__ == "__main__":
-    proofread_files()
+
+proofread_files()
