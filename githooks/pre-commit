@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Exit script on any error
+set -e
+
+# Check if proofreading is enabled
+if [ "$PROOFREAD" != "true" ]; then
+    echo "Proofreading is disabled. Skipping..."
+    exit 0
+fi
+
+./scripts/venv/bin/python3 ./scripts/proofreading.py
+
+# fast abort
+exit 1
